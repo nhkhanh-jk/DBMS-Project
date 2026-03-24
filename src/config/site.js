@@ -1,4 +1,3 @@
-export type SiteConfig = typeof siteConfig;
 import i18next from "../i18n";
 
 export const siteConfig = () => ({

@@ -4,13 +4,11 @@ import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { useTranslation } from "react-i18next";
 
-type TabType = "GENERAL" | "DETAILS" | "PASSWORD" | "VOUCHER" | "HISTORY";
-
 export default function TaiKhoanPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<TabType>("GENERAL");
+  const [activeTab, setActiveTab] = useState("GENERAL");
 
-  const menuItems: { id: TabType; label: string }[] = [
+  const menuItems = [
     { id: "GENERAL", label: t("general-info") },
     { id: "DETAILS", label: t("account-details") },
     { id: "PASSWORD", label: t("change-password") },

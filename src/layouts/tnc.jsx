@@ -1,11 +1,11 @@
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@heroui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-export default function TNCLayout({ children }: { children: ReactNode }) {
+export default function TNCLayout({ children }) {
   const { t, i18n } = useTranslation();
-  const [user, setUser] = useState<{ name: string; username: string }| null>(null);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {

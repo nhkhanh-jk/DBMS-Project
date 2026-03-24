@@ -6,13 +6,11 @@ const ThemeProps = {
   key: "theme",
   light: "light",
   dark: "dark",
-} as const;
+};
 
-type Theme = typeof ThemeProps.light | typeof ThemeProps.dark;
-
-export const useTheme = (defaultTheme?: Theme) => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const storedTheme = localStorage.getItem(ThemeProps.key) as Theme | null;
+export const useTheme = (defaultTheme) => {
+  const [theme, setTheme] = useState(() => {
+    const storedTheme = localStorage.getItem(ThemeProps.key);
 
     return storedTheme || (defaultTheme ?? ThemeProps.light);
   });
@@ -25,7 +23,7 @@ export const useTheme = (defaultTheme?: Theme) => {
     return theme === ThemeProps.light;
   }, [theme]);
 
-  const _setTheme = (theme: Theme) => {
+  const _setTheme = (theme) => {
     localStorage.setItem(ThemeProps.key, theme);
     document.documentElement.classList.remove(
       ThemeProps.light,

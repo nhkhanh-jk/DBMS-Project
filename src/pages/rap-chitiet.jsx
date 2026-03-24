@@ -6,7 +6,7 @@ import { Chip } from "@heroui/chip";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-const movieDataByDate: Record<string, any[]> = {
+const movieDataByDate = {
   "23": [
     {
       title: "QUỶ NHẬP TRÀNG 2",
@@ -209,13 +209,13 @@ export default function RapChiTietPage() {
                       />
                     </div>
                     <div className="flex-grow space-y-6">
-                      {movie.formats.map((format: any, fIdx: number) => (
+                      {movie.formats.map((format, fIdx) => (
                         <div key={fIdx}>
                           <p className="font-bold text-[16px] mb-3 text-[#333] border-l-4 border-[#e71a0f] pl-3">
                             {format.name}
                           </p>
                           <div className="flex flex-wrap gap-2">
-                            {format.times.map((time: string, tIdx: number) => (
+                            {format.times.map((time, tIdx) => (
                               <Button 
                                 key={tIdx}
                                 className="border border-[#ccc] bg-white text-[#333] font-bold shadow-sm hover:border-[#b11116] hover:text-[#b11116] transition-all" 

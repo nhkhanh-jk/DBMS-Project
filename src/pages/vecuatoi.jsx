@@ -3,11 +3,9 @@ import TNCLayout from "@/layouts/tnc";
 import { Chip } from "@heroui/chip";
 import { useTranslation } from "react-i18next";
 
-type TicketType = "ACTIVE" | "HISTORY";
-
 export default function VeCuaToiPage() {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<TicketType>("ACTIVE");
+  const [tab, setTab] = useState("ACTIVE");
 
   const activeTickets = [
     {

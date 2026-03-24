@@ -7,8 +7,7 @@ import { useTranslation } from "react-i18next";
 import movies from "../data/movies";
 import { slugify } from "@/utils/slugify";
 
-type Region = "Hồ Chí Minh" | "Đà Nẵng" | "Hà Nội";
-type BookingStep = "schedule" | "seats" | "combos" | "payment";
+
 
 const TICKET_PRICE = 105000;
 const VIP_SURCHARGE = 20000;
@@ -16,17 +15,17 @@ const SWEETBOX_SURCHARGE = 40000;
 
 export default function PhimChiTietPage() {
   const { t } = useTranslation();
-  const { slug } = useParams<{ slug: string }>();
+  const { slug } = useParams();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [bookingStep, setBookingStep] = useState<BookingStep>("schedule");
+  const [bookingStep, setBookingStep] = useState("schedule");
   const [selectedDay, setSelectedDay] = useState("23");
-  const [selectedRegion, setSelectedRegion] = useState<Region>("Hồ Chí Minh");
+  const [selectedRegion, setSelectedRegion] = useState("Hồ Chí Minh");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedCinema, setSelectedCinema] = useState("");
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-  const [selectedCombos, setSelectedCombos] = useState<Record<string, number>>({});
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [selectedCombos, setSelectedCombos] = useState({});
 
-  const movie = movies.find((m: any) => slugify(m.title) === slug) || movies[0];
+  const movie = movies.find((m) => slugify(m.title) === slug) || movies[0];
   const trailerUrl = "https://www.youtube.com/watch?v=S_vO_0v573Q";
 
   const combosList = [
@@ -36,7 +35,7 @@ export default function PhimChiTietPage() {
     { id: "4", name: "PARTY COMBO", desc: "3 Bắp (vị ngọt/mặn) + 3 Nước (Pepsi/7Up/Mirinda/Sprit)", price: 215000, img: "https://www.cgv.vn/media/concession/party-combo.png" },
   ];
 
-  const cinemasByRegion: Record<Region, any[]> = {
+  const cinemasByRegion = {
     "Hồ Chí Minh": [
       { name: "TNC Vincom Đồng Khởi", formats: [{ name: "2D Phụ Đề Anh", times: ["10:15", "13:45", "16:30", "20:00"] }] },
       { name: "TNC Vincom Thủ Đức", formats: [{ name: "2D Phụ Đề Anh", times: ["11:00", "14:20", "18:15", "23:20"] }] },
@@ -64,7 +63,7 @@ export default function PhimChiTietPage() {
     { month: "04", day: "02", weekday: "THU" },
   ];
 
-  const toggleSeat = (id: string) => {
+  const toggleSeat = (id) => {
     if (selectedSeats.includes(id)) {
       setSelectedSeats(prev => prev.filter(s => s !== id));
     } else {
@@ -76,7 +75,7 @@ export default function PhimChiTietPage() {
     }
   };
 
-  const updateCombo = (id: string, delta: number) => {
+  const updateCombo = (id, delta) => {
     setSelectedCombos(prev => {
       const current = prev[id] || 0;
       const next = Math.max(0, current + delta);
@@ -269,7 +268,7 @@ export default function PhimChiTietPage() {
                             </div>
                             <div className="px-6 py-4 flex gap-4 border-b border-gray-200 bg-white">
                                 {Object.keys(cinemasByRegion).map(reg => (
-                                    <Button key={reg} size="sm" radius="none" onClick={() => setSelectedRegion(reg as Region)} className={`${selectedRegion === reg ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'} font-black px-4`}>{reg}</Button>
+                                    <Button key={reg} size="sm" radius="none" onClick={() => setSelectedRegion(reg)} className={`${selectedRegion === reg ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'} font-black px-4`}>{reg}</Button>
                                 ))}
                             </div>
                             <div className="p-6 space-y-12">
@@ -277,7 +276,7 @@ export default function PhimChiTietPage() {
                                     <div key={idx} className="border-b border-gray-300 pb-10 last:border-0 text-black">
                                         <h4 className="text-[19px] font-black mb-4">{cinema.name}</h4>
                                         <div className="flex flex-wrap gap-2">
-                                            {cinema.formats[0].times.map((time: string) => (
+                                            {cinema.formats[0].times.map((time) => (
                                                 <Button key={time} onClick={() => { setSelectedCinema(cinema.name); setSelectedTime(time); setBookingStep("seats"); }} variant="bordered" radius="none" size="sm" className="border border-[#ccc] bg-white text-[#333] font-bold px-6 hover:border-red-600 hover:text-red-600">{time}</Button>
                                             ))}
                                         </div>

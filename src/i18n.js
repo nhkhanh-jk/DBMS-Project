@@ -34,18 +34,9 @@
  */
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import i18nextHttpBackend, {
-  type HttpBackendOptions,
-} from "i18next-http-backend";
+import i18nextHttpBackend from "i18next-http-backend";
 
-export interface AvailableLanguage {
-  code: string; // ISO 639-1 language code
-  nativeName: string; // Native name of the language
-  isRTL: boolean; // Right-to-left language
-  isDefault?: boolean; // Default language
-}
-
-export const availableLanguages: AvailableLanguage[] = [
+export const availableLanguages = [
   { code: "en-US", nativeName: "English", isRTL: false, isDefault: true },
   { code: "vi-VN", nativeName: "Tiếng Việt", isRTL: false },
 ];
@@ -55,7 +46,7 @@ const fallbackLng = "en-US";
 i18n
   .use(i18nextHttpBackend)
   .use(initReactI18next) // passes i18n down to react-i18next
-  .init<HttpBackendOptions>({
+  .init({
     lng:
       localStorage.getItem("preferredLanguage") ||
       availableLanguages.find((lang) => lang.isDefault)?.code ||
@@ -72,7 +63,7 @@ i18n
     },
     backend: {
       loadPath: (lng, ns) => {
-        let url: URL = new URL("./locales/base/en-US.json", import.meta.url);
+        let url = new URL("./locales/base/en-US.json", import.meta.url);
 
         // Vite does not know how to resolve
         // new URL(`./locales/${ns}/${reqlng}.json`, import.meta.url)

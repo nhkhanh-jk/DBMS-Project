@@ -1,4 +1,4 @@
-export function slugify(text: string): string {
+export function slugify(text) {
     return text
         .toString()
         .normalize('NFD')                   // split accented characters into their base characters and diacritical marks

@@ -3,30 +3,17 @@ import {
   useContext,
   useState,
   useEffect,
-  FC,
-  ReactNode,
 } from "react";
 
-export type CookieConsentStatus = "pending" | "accepted" | "rejected";
-
-interface CookieConsentContextType {
-  cookieConsent: CookieConsentStatus;
-  acceptCookies: () => void;
-  rejectCookies: () => void;
-  resetCookieConsent: () => void;
-}
-
-const CookieConsentContext = createContext<
-  CookieConsentContextType | undefined
->(undefined);
+const CookieConsentContext = createContext(undefined);
 
 const COOKIE_CONSENT_KEY = "cookie-consent-status";
 
-export const CookieConsentProvider: FC<{ children: ReactNode }> = ({
+export const CookieConsentProvider = ({
   children,
 }) => {
   const [cookieConsent, setCookieConsent] =
-    useState<CookieConsentStatus>("pending");
+    useState("pending");
 
   // Charger l'état des cookies depuis localStorage au démarrage
   useEffect(() => {

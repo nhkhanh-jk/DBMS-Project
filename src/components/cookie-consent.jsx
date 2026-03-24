@@ -16,7 +16,7 @@ import { buttonGradient } from "./primitives";
 
 import { siteConfig } from "@/config/site";
 
-export const CookieConsent: React.FC = () => {
+export const CookieConsent = () => {
   const { t } = useTranslation();
   const { cookieConsent, acceptCookies, rejectCookies } = useCookieConsent();
 

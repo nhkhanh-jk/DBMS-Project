@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-import { type FC, useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Dropdown,
@@ -26,23 +26,7 @@ import {
 import { Button } from "@heroui/button";
 import { Tooltip } from "@heroui/tooltip";
 
-import { type AvailableLanguage } from "@/i18n";
-import { type IconSvgProps } from "@/types";
-
-interface LanguageSwitchProps {
-  /**
-   * The available languages
-   * @see i18n.ts
-   */
-  availableLanguages?: AvailableLanguage[];
-  /**
-   * Custom icon component to display instead of the default I18nIcon
-   * @default I18nIcon
-   */
-  icon?: FC<IconSvgProps>;
-}
-
-export const I18nIcon: FC<IconSvgProps> = ({
+export const I18nIcon = ({
   size = 24,
   width,
   height,
@@ -81,14 +65,14 @@ export const I18nIcon: FC<IconSvgProps> = ({
  * <LanguageSwitch availableLanguages={availableLanguages} />
  * ```
  */
-export const LanguageSwitch: FC<LanguageSwitchProps> = ({
-  availableLanguages: availableLanguages = [
+export const LanguageSwitch = ({
+  availableLanguages = [
     { code: "en-US", nativeName: "English", isRTL: false, isDefault: true },
   ],
   icon: Icon = I18nIcon,
 }) => {
   const { i18n, t } = useTranslation();
-  const [language, setLanguage] = useState<string>(
+  const [language, setLanguage] = useState(
     localStorage.getItem("preferredLanguage") || i18n.language,
   );
 
@@ -117,7 +101,7 @@ export const LanguageSwitch: FC<LanguageSwitchProps> = ({
    * @example changeLanguage("fr-FR")
    */
   const changeLanguage = useCallback(
-    (lng: string) => {
+    (lng) => {
       i18n.changeLanguage(lng);
       setLanguage(lng);
       localStorage.setItem("preferredLanguage", lng);
@@ -145,7 +129,7 @@ export const LanguageSwitch: FC<LanguageSwitchProps> = ({
    * @returns The short language code
    * @example getShortLanguage("fr-FR") => "FR"
    */
-  const getShortLanguage = (lng: string) => {
+  const getShortLanguage = (lng) => {
     // use the last part of the language code or the whole code
     return lng.split("-")[1] || lng;
   };

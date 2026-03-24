@@ -7,10 +7,10 @@ import TNCLayout from "@/layouts/tnc";
 import { slugify } from "@/utils/slugify";
 import movies from "../data/movies";
 
-const RankingMedal = ({ rank }: { rank: number }) => {
+const RankingMedal = ({ rank }) => {
   if (rank <= 0 || rank > 3) return null;
 
-  const config: Record<number, { bg: string, ring: string, iconColor: string }> = {
+  const config = {
     1: { bg: "bg-[#e71a0f]", ring: "ring-[#e71a0f]/40", iconColor: "text-white" },
     2: { bg: "bg-[#f6a111]", ring: "ring-[#f6a111]/40", iconColor: "text-white" },
     3: { bg: "bg-[#337ab7]", ring: "ring-[#337ab7]/40", iconColor: "text-white" },
@@ -38,7 +38,7 @@ const RankingMedal = ({ rank }: { rank: number }) => {
 
 export default function PhimPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<"now-showing" | "coming-soon" | "sneak-show">("now-showing");
+  const [activeTab, setActiveTab] = useState("now-showing");
 
   const filteredMovies = movies.filter(movie => movie.category === activeTab);
 

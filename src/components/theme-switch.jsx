@@ -1,18 +1,13 @@
-import { FC, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { VisuallyHidden } from "@react-aria/visually-hidden";
-import { SwitchProps, useSwitch } from "@heroui/switch";
+import { useSwitch } from "@heroui/switch";
 import { clsx } from "@heroui/shared-utils";
 import { useTranslation } from "react-i18next";
 
 import { useTheme } from "@/hooks/use-theme";
 import { SunFilledIcon, MoonFilledIcon } from "@/components/icons";
 
-export interface ThemeSwitchProps {
-  className?: string;
-  classNames?: SwitchProps["classNames"];
-}
-
-export const ThemeSwitch: FC<ThemeSwitchProps> = ({
+export const ThemeSwitch = ({
   className,
   classNames,
 }) => {
