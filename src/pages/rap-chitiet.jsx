@@ -87,7 +87,7 @@ export default function RapChiTietPage() {
 
   return (
     <TNCLayout>
-      <div className="bg-[#fcfbf7] min-h-screen pb-20">
+      <div className="bg-[#080812] min-h-screen pb-20">
         <div className="mx-auto max-w-5xl px-4 py-8">
           
           {/* Back Button and Header Title */}

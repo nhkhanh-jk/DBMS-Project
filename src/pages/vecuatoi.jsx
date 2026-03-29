@@ -41,7 +41,7 @@ export default function VeCuaToiPage() {
 
   return (
     <TNCLayout>
-      <section className="bg-[#fcfbf7] min-h-screen py-10 md:py-16">
+      <section className="bg-[#080812] min-h-screen py-10 md:py-16">
         <div className="mx-auto max-w-5xl px-4">
           
           {/* Header */}
@@ -145,8 +145,8 @@ export default function VeCuaToiPage() {
                             </div>
 
                             {/* Ticket Circles (Holes) */}
-                            <div className="hidden md:block absolute left-[122px] -top-3 w-4 h-4 rounded-full bg-[#fcfbf7] border border-gray-200"></div>
-                            <div className="hidden md:block absolute left-[122px] -bottom-3 w-4 h-4 rounded-full bg-[#fcfbf7] border border-gray-200"></div>
+                            <div className="hidden md:block absolute left-[122px] -top-3 w-4 h-4 rounded-full bg-[#080812] border border-gray-200"></div>
+                            <div className="hidden md:block absolute left-[122px] -bottom-3 w-4 h-4 rounded-full bg-[#080812] border border-gray-200"></div>
                         </div>
                     </div>
                 ))

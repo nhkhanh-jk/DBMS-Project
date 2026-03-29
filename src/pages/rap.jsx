@@ -38,7 +38,7 @@ export default function RapPage() {
   return (
     <TNCLayout>
       {/* Background container wrapper */}
-      <section className="bg-[#ede2cf] min-h-[60vh] py-14 px-4 flex justify-center">
+      <section className="bg-[#080812] min-h-[60vh] py-14 px-4 flex justify-center">
 
         {/* The Dark Ticket/Board Container */}
         <div className="w-full max-w-5xl bg-[#2a2928] p-3 shadow-2xl relative overflow-hidden"
