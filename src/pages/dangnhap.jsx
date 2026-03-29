@@ -13,17 +13,27 @@ export default function DangNhapPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const DEMO_ACCOUNTS = {
+    user:     { name: "Lê Chí",        role: "customer" },
+    admin:    { name: "Administrator", role: "admin"    },
+    nhanvien: { name: "Trần Nhân Viên",role: "staff"   },
+    quanly:   { name: "Nguyễn Quản Lý",role: "manager" },
+  };
+
+  const ROLE_REDIRECT = {
+    customer: "/thanhvien",
+    admin:    "/admin",
+    staff:    "/nhanvien",
+    manager:  "/quanly",
+  };
+
   const handleLogin = () => {
-    if ((username === "admin" && password === "123456") || (username === "user" && password === "123456")) {
+    const account = DEMO_ACCOUNTS[username];
+    if (account && password === "123456") {
       setError("");
-      // Store user info
-      const userData = {
-        name: username === "admin" ? "Administrator" : "Lê Chí",
-        username: username
-      };
+      const userData = { name: account.name, username, role: account.role };
       localStorage.setItem("tnc_user", JSON.stringify(userData));
-      
-      navigate("/thanhvien");
+      navigate(ROLE_REDIRECT[account.role]);
     } else {
       setError(t("login-error"));
     }

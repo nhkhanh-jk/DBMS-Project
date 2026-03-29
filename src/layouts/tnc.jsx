@@ -66,6 +66,17 @@ export default function TNCLayout({ children }) {
                    <span className="text-[12px] font-bold text-gray-500 uppercase">{t("welcome")}</span>
                    <Link to="/taikhoan" className="text-[13px] font-black text-[#b11116] hover:underline">{user.name}!</Link>
                 </div>
+                {["admin", "staff", "manager"].includes(user.role) && (
+                  <Link to={user.role === "staff" ? "/nhanvien" : user.role === "manager" ? "/quanly" : "/admin"}>
+                    <Button
+                      size="sm"
+                      className="bg-[#1e293b] text-white font-black uppercase text-[11px] h-9 px-4 hover:bg-[#0f172a] transition-all shadow-md border border-white/20"
+                      radius="full"
+                    >
+                      ⚙ Quản trị
+                    </Button>
+                  </Link>
+                )}
                 <Button 
                   onClick={handleLogout}
                   size="sm" 
