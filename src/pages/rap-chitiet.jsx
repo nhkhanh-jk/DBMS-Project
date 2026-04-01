@@ -65,9 +65,122 @@ const movieDataByDate = {
   ]
 };
 
+const TICKET_PRICE = 105000;
+const VIP_SURCHARGE = 20000;
+const SWEETBOX_SURCHARGE = 40000;
+
 export default function RapChiTietPage() {
   const { t } = useTranslation();
   const [selectedDay, setSelectedDay] = useState("23");
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [bookingStep, setBookingStep] = useState("seats");
+  const [selectedMovie, setSelectedMovie] = useState(null);
+  const [selectedTime, setSelectedTime] = useState("");
+  const [selectedCinema, setSelectedCinema] = useState("TNC Vincom Đà Nẵng");
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [selectedCombos, setSelectedCombos] = useState({});
+
+  const combosList = [
+    { id: "1", name: "MY COMBO", desc: "1 Bắp (vị ngọt/mặn) + 1 Nước (Pepsi/7Up/Mirinda/Sprit)", price: 85000, img: "https://www.cgv.vn/media/concession/m-combo.png" },
+    { id: "2", name: "CGV COMBO", desc: "1 Bắp (vị ngọt/mặn) + 2 Nước (Pepsi/7Up/Mirinda/Sprit)", price: 115000, img: "https://www.cgv.vn/media/concession/cgv-combo.png" },
+    { id: "3", name: "COUPLE COMBO", desc: "2 Bắp (vị ngọt/mặn) + 2 Nước (Pepsi/7Up/Mirinda/Sprit)", price: 155000, img: "https://www.cgv.vn/media/concession/couple-combo.png" },
+    { id: "4", name: "PARTY COMBO", desc: "3 Bắp (vị ngọt/mặn) + 3 Nước (Pepsi/7Up/Mirinda/Sprit)", price: 215000, img: "https://www.cgv.vn/media/concession/party-combo.png" },
+  ];
+
+  const toggleSeat = (id) => {
+    if (selectedSeats.includes(id)) {
+      setSelectedSeats(prev => prev.filter(s => s !== id));
+    } else {
+      if (selectedSeats.length >= 8) {
+        alert(t("max-8-tickets") || "Bạn chỉ có thể chọn tối đa 8 vé!");
+        return;
+      }
+      setSelectedSeats(prev => [...prev, id]);
+    }
+  };
+
+  const updateCombo = (id, delta) => {
+    setSelectedCombos(prev => {
+      const current = prev[id] || 0;
+      const next = Math.max(0, current + delta);
+      return { ...prev, [id]: next };
+    });
+  };
+
+  const calculateTotal = () => {
+    const seatTotal = selectedSeats.reduce((sum, id) => {
+      let price = TICKET_PRICE;
+      const row = id[0];
+      if (["E", "F", "G", "H", "I", "J", "K", "L", "M", "N"].includes(row)) price += VIP_SURCHARGE;
+      if (row === "P") price += SWEETBOX_SURCHARGE;
+      return sum + price;
+    }, 0);
+
+    const comboTotal = Object.entries(selectedCombos).reduce((sum, [id, qty]) => {
+      const combo = combosList.find(c => c.id === id);
+      return sum + (combo?.price || 0) * qty;
+    }, 0);
+
+    return seatTotal + comboTotal;
+  };
+
+  const handleNext = () => {
+    if (bookingStep === "seats" && selectedSeats.length === 0) {
+      alert(t("please-select-seat") || "Vui lòng chọn ghế!");
+      return;
+    }
+    if (bookingStep === "seats") setBookingStep("combos");
+    else if (bookingStep === "combos") setBookingStep("payment");
+  };
+
+  const handlePrevious = () => {
+    if (bookingStep === "combos") setBookingStep("seats");
+    else if (bookingStep === "payment") setBookingStep("combos");
+  };
+
+  const renderSeatSummary = () => {
+    if (selectedSeats.length === 0) return "-";
+    if (selectedSeats.length <= 4) return selectedSeats.join(", ");
+    const row1 = selectedSeats.slice(0, 4);
+    const row2 = selectedSeats.slice(4);
+    return (
+      <div className="flex flex-col">
+        <span>{row1.join(", ")},</span>
+        <span>{row2.join(", ")}</span>
+      </div>
+    );
+  };
+
+  const renderSeatGrid = () => {
+    const rows = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "P"];
+    const cols = Array.from({ length: 20 }, (_, i) => 20 - i);
+    return (
+      <div className="flex flex-col items-center gap-1.5 py-8 overflow-x-auto min-w-fit">
+        {rows.map(row => (
+          <div key={row} className="flex gap-1">
+            {cols.map(col => {
+              const id = `${row}${col}`;
+              const isVip = ["E", "F", "G", "H", "I", "J", "K", "L", "M", "N"].includes(row);
+              const isSweetbox = row === "P";
+              const isSold = ["J10", "K12", "K11"].includes(id);
+              const isSelected = selectedSeats.includes(id);
+              let styleClass = "border-2 text-[8px] flex items-center justify-center font-bold cursor-pointer transition-all w-6 h-6 ";
+              if (isSold) styleClass += "bg-gray-400 border-gray-400 text-white cursor-not-allowed";
+              else if (isSelected) styleClass += "bg-[#b11116] border-[#b11116] text-white";
+              else if (isSweetbox) styleClass += "border-pink-500 text-pink-500 hover:bg-pink-50";
+              else if (isVip) styleClass += "border-red-500 text-red-500 hover:bg-red-50";
+              else styleClass += "border-green-500 text-green-500 hover:bg-green-50";
+              return (
+                <div key={id} onClick={() => !isSold && toggleSeat(id)} className={styleClass}>
+                  {isSold ? "X" : id}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   const dates = [
     { month: "03", day: "23", weekday: "MON" },
@@ -218,6 +331,12 @@ export default function RapChiTietPage() {
                             {format.times.map((time, tIdx) => (
                               <Button 
                                 key={tIdx}
+                                onClick={() => {
+                                  setSelectedMovie(movie);
+                                  setSelectedTime(time);
+                                  setBookingStep("seats");
+                                  setIsBookingOpen(true);
+                                }}
                                 className="border border-[#ccc] bg-white text-[#333] font-bold shadow-sm hover:border-[#b11116] hover:text-[#b11116] transition-all" 
                                 radius="none"
                                 size="sm"
@@ -242,6 +361,150 @@ export default function RapChiTietPage() {
 
         </div>
       </div>
+
+      {/* BOOKING MODAL */}
+      {isBookingOpen && selectedMovie && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-4 animate-in fade-in duration-300">
+            <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={() => setIsBookingOpen(false)}></div>
+            <div className="relative w-full max-w-6xl h-full md:h-auto md:max-h-[95vh] bg-[#fdfcf0] shadow-2xl flex flex-col overflow-hidden">
+                <div className="bg-[#222] text-white p-4 flex justify-between items-center shrink-0">
+                    <div>
+                        <h3 className="text-lg font-black uppercase tracking-widest">
+                            {bookingStep === "schedule" ? t("select-showtime") : bookingStep === "combos" ? t("popcorn-drinks") : bookingStep === "payment" ? t("payment") : t("booking-online") || "CHỌN GHẾ"}
+                        </h3>
+                        {bookingStep !== "schedule" && (
+                            <p className="text-xs text-yellow-500 font-bold">
+                                {selectedCinema} | {selectedDay}/03/2026 {selectedTime}
+                            </p>
+                        )}
+                    </div>
+                    <button onClick={() => setIsBookingOpen(false)} className="text-2xl font-bold hover:text-red-500 w-10 h-10">✕</button>
+                </div>
+
+                <div className="flex-grow overflow-y-auto custom-scrollbar">
+                    {bookingStep === "seats" ? (
+                        <div className="bg-white p-6 flex flex-col items-center min-h-[500px] animate-in fade-in duration-300">
+                            <div className="w-full max-w-3xl mb-12">
+                                <div className="text-center font-bold text-gray-400 mb-2 tracking-[1em] uppercase">{t("select-seat") || "CHỌN GHẾ"}</div>
+                                <div className="border-t-8 border-gray-300 shadow-[0_-10px_20px_rgba(0,0,0,0.1)] pt-4 text-center">
+                                    <h4 className="text-2xl font-black text-gray-400 tracking-[0.5em] uppercase">{t("screen") || "MÀN HÌNH"}</h4>
+                                </div>
+                            </div>
+                            {renderSeatGrid()}
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-12 mt-8 text-xs font-bold text-gray-600 uppercase border-t pt-8 w-full max-w-2xl">
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 bg-[#b11116] border-2 border-[#b11116]"></div> {t("selected") || "Đang Chọn"}</div>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 border-2 border-green-500"></div> {t("available") || "Trống"}</div>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 bg-gray-400 border-2 border-gray-400"></div> {t("sold") || "Đã Bán"}</div>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 border-2 border-red-500"></div> {t("vip") || "VIP"}</div>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 border-2 border-pink-500 text-center leading-4 text-[10px]">X</div> {t("cannot-pick") || "Không Thể Chọn"}</div>
+                                <div className="flex items-center gap-3"><div className="w-5 h-5 border-2 border-pink-500"></div> {t("sweetbox") || "Ghế Đôi"}</div>
+                            </div>
+                        </div>
+                    ) : bookingStep === "combos" ? (
+                        <div className="p-8 max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-right-4 duration-400">
+                           <div className="bg-[#f2f2f2] p-4 text-sm font-black text-[#333] uppercase border-l-4 border-red-600">{t("popcorn-drinks") || "Bắp nước"}</div>
+                           <div className="space-y-4">
+                              {combosList.map(combo => (
+                                <div key={combo.id} className="bg-white p-4 border border-gray-200 flex items-center gap-6 group hover:shadow-md transition-shadow">
+                                   <img src={combo.img} className="w-24 h-24 object-contain group-hover:scale-105 transition-transform" />
+                                   <div className="flex-grow">
+                                      <h5 className="font-black text-black uppercase">{combo.name}</h5>
+                                      <p className="text-xs text-gray-500 mt-1">{combo.desc}</p>
+                                      <p className="text-red-600 font-black mt-2">{t("price") || "Giá"}: {combo.price.toLocaleString("vi-VN")} đ</p>
+                                   </div>
+                                   <div className="flex items-center gap-4 bg-gray-100 p-2 rounded-lg">
+                                      <button onClick={() => updateCombo(combo.id, -1)} className="w-8 h-8 flex items-center justify-center bg-white border border-gray-300 font-bold hover:bg-red-50 hover:text-red-500 transition-colors">-</button>
+                                      <span className="font-black w-4 text-center text-black">{selectedCombos[combo.id] || 0}</span>
+                                      <button onClick={() => updateCombo(combo.id, 1)} className="w-8 h-8 flex items-center justify-center bg-white border border-gray-300 font-bold hover:bg-red-50 hover:text-red-500 transition-colors">+</button>
+                                   </div>
+                                </div>
+                              ))}
+                           </div>
+                        </div>
+                    ) : (
+                        <div className="p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-right-4 duration-400">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <div className="bg-[#f2f2f2] p-4 text-sm font-black text-[#333] uppercase border-l-4 border-black">{t("order-summary") || "Tóm Tắt Đơn Hàng"}</div>
+                                    <div className="bg-white p-6 border border-gray-200 space-y-4 text-black text-sm">
+                                        <div className="flex justify-between border-b pb-2">
+                                            <span className="font-bold text-gray-500">{t("movies") || "Phim"}</span>
+                                            <span className="font-black uppercase text-right w-48">{selectedMovie.title}</span>
+                                        </div>
+                                        <div className="flex justify-between border-b pb-2">
+                                            <span className="font-bold text-gray-500">{t("select-seat") || "Ghế Chọn"}</span>
+                                            <span className="font-black text-red-600">{selectedSeats.join(", ")}</span>
+                                        </div>
+                                        {Object.entries(selectedCombos).map(([id, qty]) => qty > 0 && (
+                                            <div key={id} className="flex justify-between border-b pb-2 italic">
+                                                <span>{combosList.find(c => c.id === id)?.name} (x{qty})</span>
+                                                <span>{((combosList.find(c => c.id === id)?.price || 0) * qty).toLocaleString("vi-VN")} đ</span>
+                                            </div>
+                                        ))}
+                                        <div className="flex justify-between pt-4 text-xl font-black">
+                                            <span>{t("total") || "Tổng Tiền"}</span>
+                                            <span className="text-red-600">{calculateTotal().toLocaleString("vi-VN")} đ</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-6">
+                                    <div className="bg-[#f2f2f2] p-4 text-sm font-black text-[#333] uppercase border-l-4 border-black">{t("payment-method") || "Phương Thức Thanh Toán"}</div>
+                                    <div className="space-y-3">
+                                        {["Ví MoMo", "ZaloPay", "ShopeePay", "Thẻ ATM", "Thẻ Visa/Mastercard"].map(method => (
+                                            <label key={method} className="flex items-center gap-4 p-4 bg-white border border-gray-200 hover:border-red-500 cursor-pointer transition-colors group">
+                                                <input type="radio" name="pay" className="w-5 h-5 accent-red-600" />
+                                                <span className="font-bold text-gray-700 group-hover:text-red-600">{method}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {bookingStep !== "schedule" && (
+                    <div className="bg-black text-white p-2 md:p-3 flex flex-wrap md:flex-nowrap items-stretch gap-4 shrink-0 border-t border-gray-800">
+                        {bookingStep !== "seats" && (
+                            <div onClick={handlePrevious} className="cursor-pointer bg-[#333] hover:bg-black p-4 flex flex-col items-center justify-center transition-all min-w-[100px] border border-gray-700">
+                                <span className="text-3xl">←</span>
+                                <span className="text-[10px] font-black uppercase">{t("previous") || "QUAY LẠI"}</span>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-3 flex-grow min-w-0">
+                            <img src={selectedMovie.image} className="w-16 h-24 object-cover border border-white/20" />
+                            <div className="min-w-0">
+                                <h4 className="font-black text-yellow-500 uppercase truncate text-sm md:text-base">{selectedMovie.title}</h4>
+                                <p className="text-[10px] font-bold text-gray-400">2D | {selectedMovie.rating}</p>
+                            </div>
+                        </div>
+                        <div className="hidden lg:grid grid-cols-2 gap-x-8 gap-y-1 text-[11px] font-bold min-w-[300px] px-4 border-x border-gray-800 items-center">
+                            <div className="text-gray-500 uppercase">{t("cinemas") || "Rạp"}</div><div className="text-white truncate">{selectedCinema}</div>
+                            <div className="text-gray-500 uppercase text-[9px] leading-tight">{t("showtime") || "Thời Gian Dự Kiến"}</div>
+                            <div className="text-white text-[10px]">{selectedTime}, {selectedDay}/03/2026</div>
+                            <div className="text-gray-500 uppercase">{t("select-seat") || "Ghế Chọn"}</div>
+                            <div className="text-yellow-500 font-black text-[10px]">{renderSeatSummary()}</div>
+                        </div>
+                        <div className="flex flex-col justify-center text-right min-w-[150px] px-4">
+                            <div className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t("total") || "TỔNG THU"}</div>
+                            <div className="text-2xl font-black text-white leading-none mt-1">{calculateTotal().toLocaleString("vi-VN")} đ</div>
+                        </div>
+                        <div onClick={handleNext} className="cursor-pointer bg-[#e71a0f] hover:brightness-110 p-4 flex flex-col items-center justify-center transition-all min-w-[120px] shadow-[0px_-2px_10px_rgba(231,26,15,0.4)]">
+                            <span className="text-3xl">→</span>
+                            <span className="text-[10px] font-black uppercase">{bookingStep === "payment" ? (t("pay-now") || "Thanh toán") : (t("next") || "Tiếp tục")}</span>
+                        </div>
+                    </div>
+                )}
+            </div>
+            <style>{`
+                .hide-scrollbar::-webkit-scrollbar { display: none; }
+                .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: #eee; }
+            `}</style>
+        </div>
+      )}
     </TNCLayout>
   );
 }

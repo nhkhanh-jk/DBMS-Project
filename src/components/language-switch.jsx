@@ -67,7 +67,7 @@ export const I18nIcon = ({
  */
 export const LanguageSwitch = ({
   availableLanguages = [
-    { code: "en-US", nativeName: "English", isRTL: false, isDefault: true },
+    { code: "vi-VN", nativeName: "Tiếng Việt", isRTL: false, isDefault: true },
   ],
   icon: Icon = I18nIcon,
 }) => {
@@ -88,6 +88,7 @@ export const LanguageSwitch = ({
       availableLanguages.find((lang) => lang.code === language)?.isRTL || false;
 
     document.documentElement.dir = isRTL ? "rtl" : "ltr";
+    document.documentElement.lang = language;
   }, [language]);
 
   // Sync state with i18n when language changes externally
@@ -133,6 +134,10 @@ export const LanguageSwitch = ({
     // use the last part of the language code or the whole code
     return lng.split("-")[1] || lng;
   };
+
+  if (availableLanguages.length <= 1) {
+    return null;
+  }
 
   return (
     <Tooltip content={t("language")} delay={750}>

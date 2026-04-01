@@ -37,20 +37,16 @@ import { initReactI18next } from "react-i18next";
 import i18nextHttpBackend from "i18next-http-backend";
 
 export const availableLanguages = [
-  { code: "en-US", nativeName: "English", isRTL: false, isDefault: true },
-  { code: "vi-VN", nativeName: "Tiếng Việt", isRTL: false },
+  { code: "vi-VN", nativeName: "Tiếng Việt", isRTL: false, isDefault: true },
 ];
 
-const fallbackLng = "en-US";
+const fallbackLng = "vi-VN";
 
 i18n
   .use(i18nextHttpBackend)
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
-    lng:
-      localStorage.getItem("preferredLanguage") ||
-      availableLanguages.find((lang) => lang.isDefault)?.code ||
-      fallbackLng,
+    lng: "vi-VN",
     fallbackLng: fallbackLng,
 
     ns: ["base"],
@@ -78,11 +74,11 @@ i18n
                 url = new URL("./locales/base/vi-VN.json", import.meta.url);
                 break;
               default:
-                url = new URL("./locales/base/en-US.json", import.meta.url);
+                url = new URL("./locales/base/vi-VN.json", import.meta.url);
             }
             break;
           default:
-            url = new URL("./locales/base/en-US.json", import.meta.url);
+            url = new URL("./locales/base/vi-VN.json", import.meta.url);
         }
 
         return url.toString();

@@ -38,51 +38,67 @@ export default function ThanhVienPage() {
           </div>
 
           {/* Membership Tiers Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
-            {/* Member */}
-            <div className="flex flex-col items-center bg-[#f9f9f9] border border-gray-200 p-8 rounded-sm shadow-sm hover:shadow-xl transition-shadow border-t-8 border-blue-500">
-                <div className="w-20 h-20 bg-blue-500 text-white rounded-full flex items-center justify-center text-3xl font-black mb-6 shadow-md">M</div>
-                <h3 className="text-2xl font-black text-[#333] mb-4">{t("tnc-member")}</h3>
-                <ul className="text-sm text-gray-600 space-y-4 text-center leading-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 xl:gap-8 mb-24">
+            {/* DONG */}
+            <div className="flex flex-col items-center bg-[#f9f9f9] border border-gray-200 p-6 rounded-sm shadow-sm hover:shadow-xl transition-shadow border-t-8 border-orange-400">
+                <div className="w-16 h-16 bg-orange-400 text-white rounded-full flex items-center justify-center text-2xl font-black mb-4 shadow-md">Đ</div>
+                <h3 className="text-xl font-black text-[#333] mb-4 text-center">{t("tier-bronze")}</h3>
+                <ul className="text-xs text-gray-600 space-y-3 text-center leading-5 flex-grow">
                     <li>• {t("earn-5")}</li>
                     <li>• {t("birthday-gift-popcorn")}</li>
                     <li>• {t("redeem-points")}</li>
                     <li>• {t("early-news")}</li>
                 </ul>
-                <div className="mt-auto pt-8">
-                    <Button className="bg-[#b11116] text-white font-black px-10" radius="none">{t("register-now")}</Button>
+                <div className="mt-6 pt-4 w-full">
+                    <Button className="bg-[#b11116] text-white font-black w-full" radius="none">{t("register-now")}</Button>
                 </div>
             </div>
 
-            {/* VIP */}
-            <div className="flex flex-col items-center bg-[#f9f9f9] border border-gray-200 p-8 rounded-sm shadow-sm hover:shadow-xl transition-shadow border-t-8 border-yellow-500 scale-105 md:z-10 bg-white">
-                <div className="w-20 h-20 bg-yellow-500 text-white rounded-full flex items-center justify-center text-3xl font-black mb-6 shadow-lg border-4 border-white">V</div>
-                <h3 className="text-2xl font-black text-[#333] mb-4">{t("tnc-vip")}</h3>
-                <p className="text-[11px] font-bold text-yellow-600 uppercase mb-4 tracking-widest">{t("spending-2m")}</p>
-                <ul className="text-sm text-gray-600 space-y-4 text-center leading-6">
+            {/* BAC */}
+            <div className="flex flex-col items-center bg-[#f9f9f9] border border-gray-200 p-6 rounded-sm shadow-sm hover:shadow-xl transition-shadow border-t-8 border-gray-400">
+                <div className="w-16 h-16 bg-gray-400 text-white rounded-full flex items-center justify-center text-2xl font-black mb-4 shadow-md">B</div>
+                <h3 className="text-xl font-black text-[#333] mb-4 text-center">{t("tier-silver")}</h3>
+                <p className="text-[10px] font-bold text-gray-500 uppercase mb-4 tracking-widest text-center">{t("spending-2m")}</p>
+                <ul className="text-xs text-gray-600 space-y-3 text-center leading-5 flex-grow">
                     <li>• {t("earn-7")}</li>
                     <li>• {t("birthday-gift-single")}</li>
                     <li>• {t("free-tickets-2")}</li>
                     <li>• {t("discount-10")}</li>
                 </ul>
-                <div className="mt-auto pt-8">
-                    <Button className="bg-[#b11116] text-white font-black px-10 shadow-md" radius="none">{t("learn-more")}</Button>
+                <div className="mt-6 pt-4 w-full">
+                    <Button className="bg-gray-800 text-white font-black w-full shadow-md" radius="none">{t("learn-more")}</Button>
                 </div>
             </div>
 
-            {/* VVIP */}
-            <div className="flex flex-col items-center bg-[#f9f9f9] border border-gray-200 p-8 rounded-sm shadow-sm hover:shadow-xl transition-shadow border-t-8 border-gray-800">
-                <div className="w-20 h-20 bg-gray-800 text-white rounded-full flex items-center justify-center text-3xl font-black mb-6 shadow-md">VV</div>
-                <h3 className="text-2xl font-black text-[#333] mb-4">{t("tnc-vvip")}</h3>
-                <p className="text-[11px] font-bold text-gray-500 uppercase mb-4 tracking-widest">{t("spending-4m")}</p>
-                <ul className="text-sm text-gray-600 space-y-4 text-center leading-6">
+            {/* VANG */}
+            <div className="flex flex-col items-center border border-gray-200 p-6 rounded-sm shadow-sm hover:shadow-xl transition-shadow border-t-8 border-yellow-500 lg:scale-105 z-10 bg-white">
+                <div className="w-16 h-16 bg-yellow-500 text-white rounded-full flex items-center justify-center text-2xl font-black mb-4 shadow-lg border-2 border-white">V</div>
+                <h3 className="text-xl font-black text-[#333] mb-4 text-center">{t("tier-gold")}</h3>
+                <p className="text-[10px] font-bold text-yellow-600 uppercase mb-4 tracking-widest text-center">{t("spending-4m")}</p>
+                <ul className="text-xs text-gray-600 space-y-3 text-center leading-5 flex-grow">
                     <li>• {t("earn-10")}</li>
                     <li>• {t("birthday-gift-couple")}</li>
                     <li>• {t("free-tickets-4")}</li>
                     <li>• {t("priority-booking")}</li>
                 </ul>
-                <div className="mt-auto pt-8">
-                    <Button className="bg-[#b11116] text-white font-black px-10" radius="none">{t("login").toUpperCase()}</Button>
+                <div className="mt-6 pt-4 w-full">
+                    <Button className="bg-[#b11116] text-white font-black w-full shadow-md" radius="none">{t("learn-more")}</Button>
+                </div>
+            </div>
+
+            {/* KIM CUONG */}
+            <div className="flex flex-col items-center bg-[#f9f9f9] border border-gray-200 p-6 rounded-sm shadow-sm hover:shadow-xl transition-shadow border-t-8 border-blue-600">
+                <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-black mb-4 shadow-md">K</div>
+                <h3 className="text-xl font-black text-[#333] mb-4 text-center">{t("tier-diamond")}</h3>
+                <p className="text-[10px] font-bold text-blue-500 uppercase mb-4 tracking-widest text-center">{t("spending-10m")}</p>
+                <ul className="text-xs text-gray-600 space-y-3 text-center leading-5 flex-grow">
+                    <li>• {t("earn-15")}</li>
+                    <li>• {t("birthday-gift-couple")}</li>
+                    <li>• {t("free-tickets-10")}</li>
+                    <li>• {t("priority-booking")}</li>
+                </ul>
+                <div className="mt-6 pt-4 w-full">
+                    <Button className="bg-blue-800 text-white font-black w-full shadow-md" radius="none">{t("learn-more")}</Button>
                 </div>
             </div>
           </div>
@@ -93,45 +109,51 @@ export default function ThanhVienPage() {
                 {t("benefit-comparison")}
              </div>
              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[700px]">
                     <thead className="bg-gray-100 text-sm font-black text-gray-700 uppercase border-b border-gray-300">
                         <tr>
-                            <th className="p-6">{t("details")}</th>
-                            <th className="p-6 text-center text-blue-600">MEMBER</th>
-                            <th className="p-6 text-center text-yellow-600">VIP</th>
-                            <th className="p-6 text-center text-gray-800">VVIP</th>
+                            <th className="p-4 md:p-6">{t("details")}</th>
+                            <th className="p-4 md:p-6 text-center text-orange-600">ĐỒNG</th>
+                            <th className="p-4 md:p-6 text-center text-gray-500">BẠC</th>
+                            <th className="p-4 md:p-6 text-center text-yellow-600">VÀNG</th>
+                            <th className="p-4 md:p-6 text-center text-blue-600">KIM CƯƠNG</th>
                         </tr>
                     </thead>
                     <tbody className="text-sm text-gray-600">
                         <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                            <td className="p-6 font-bold uppercase text-[11px]">{t("benefit-rate") || "Point Rate"}</td>
-                            <td className="p-6 text-center">5%</td>
-                            <td className="p-6 text-center font-bold">7%</td>
-                            <td className="p-6 text-center font-black text-black">10%</td>
+                            <td className="p-4 md:p-6 font-bold uppercase text-[11px]">{t("benefit-rate") || "Point Rate"}</td>
+                            <td className="p-4 md:p-6 text-center font-bold text-orange-600">5%</td>
+                            <td className="p-4 md:p-6 text-center font-bold text-gray-500">7%</td>
+                            <td className="p-4 md:p-6 text-center font-black text-yellow-600">10%</td>
+                            <td className="p-4 md:p-6 text-center font-black text-blue-600">15%</td>
                         </tr>
                         <tr className="border-b border-gray-100 bg-gray-50/30 hover:bg-gray-50 transition-colors">
-                            <td className="p-6 font-bold uppercase text-[11px]">{t("offer-3-title")}</td>
-                            <td className="p-6 text-center italic">{t("popcorn") || "Popcorn"}</td>
-                            <td className="p-6 text-center italic">Combo Single</td>
-                            <td className="p-6 text-center italic font-bold">Combo Couple</td>
+                            <td className="p-4 md:p-6 font-bold uppercase text-[11px]">{t("offer-3-title")}</td>
+                            <td className="p-4 md:p-6 text-center italic">{t("popcorn") || "Popcorn"}</td>
+                            <td className="p-4 md:p-6 text-center italic">Combo Single</td>
+                            <td className="p-4 md:p-6 text-center italic font-bold">Combo Couple</td>
+                            <td className="p-4 md:p-6 text-center italic font-bold text-blue-600">Combo Couple VIP</td>
                         </tr>
                         <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                            <td className="p-6 font-bold uppercase text-[11px]">{t("free-tickets") || "Free Tickets"}</td>
-                            <td className="p-6 text-center">-</td>
-                            <td className="p-6 text-center">02</td>
-                            <td className="p-6 text-center font-bold">04</td>
+                            <td className="p-4 md:p-6 font-bold uppercase text-[11px]">{t("free-tickets") || "Free Tickets"}</td>
+                            <td className="p-4 md:p-6 text-center">-</td>
+                            <td className="p-4 md:p-6 text-center font-bold text-gray-500">02</td>
+                            <td className="p-4 md:p-6 text-center font-black text-yellow-600">04</td>
+                            <td className="p-4 md:p-6 text-center font-black text-blue-600">10</td>
                         </tr>
                         <tr className="border-b border-gray-100 bg-gray-50/30 hover:bg-gray-50 transition-colors">
-                            <td className="p-6 font-bold uppercase text-[11px]">{t("priority-counter") || "Priority Counter"}</td>
-                            <td className="p-6 text-center">-</td>
-                            <td className="p-6 text-center">-</td>
-                            <td className="p-6 text-center text-green-600 font-black">✓</td>
+                            <td className="p-4 md:p-6 font-bold uppercase text-[11px]">{t("priority-counter") || "Priority Counter"}</td>
+                            <td className="p-4 md:p-6 text-center">-</td>
+                            <td className="p-4 md:p-6 text-center">-</td>
+                            <td className="p-4 md:p-6 text-center text-green-600 font-black">✓</td>
+                            <td className="p-4 md:p-6 text-center text-green-600 font-black">✓</td>
                         </tr>
                         <tr>
-                            <td className="p-6 font-bold uppercase text-[11px]">{t("sneak-show") || "Sneakshow"}</td>
-                            <td className="p-6 text-center">✓</td>
-                            <td className="p-6 text-center font-bold">{t("priority") || "Priority"}</td>
-                            <td className="p-6 text-center font-black text-black">{t("exclusive") || "Exclusive"}</td>
+                            <td className="p-4 md:p-6 font-bold uppercase text-[11px]">{t("sneak-show") || "Sneakshow"}</td>
+                            <td className="p-4 md:p-6 text-center">✓</td>
+                            <td className="p-4 md:p-6 text-center font-bold">{t("priority") || "Priority"}</td>
+                            <td className="p-4 md:p-6 text-center font-black text-black">{t("priority") || "Priority"}</td>
+                            <td className="p-4 md:p-6 text-center font-black text-blue-600">{t("exclusive") || "Exclusive"}</td>
                         </tr>
                     </tbody>
                 </table>

@@ -9,30 +9,30 @@ export default function VeCuaToiPage() {
 
   const activeTickets = [
     {
-        id: "TNC-88291038",
-        movie: t("movie-1-title") || "QUỶ NHẬP TRÀNG 2",
-        rating: "T18",
-        cinema: "TNC Vincom Đà Nẵng",
-        date: "MON 23/03/2026",
-        time: "22:15",
-        room: "Cinema 3",
-        seat: "H12, H13",
-        price: "240.000đ",
+        ma_dat_ve: "TNC-88291038",
+        ten_phim: t("movie-1-title") || "QUỶ NHẬP TRÀNG 2",
+        do_tuoi: "T18",
+        ten_rap: "TNC Vincom Đà Nẵng",
+        ngay_chieu: "MON 23/03/2026",
+        gio_chieu: "22:15",
+        ten_phong: "Cinema 3",
+        ghe_ngoi: "H12, H13",
+        tong_tien_thanh_toan: "240.000đ",
         poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=400&q=80"
     }
   ];
 
   const pastTickets = [
     {
-        id: "TNC-77210923",
-        movie: t("movie-2-title") || "MAI",
-        rating: "T18",
-        cinema: "TNC Vincom City Hub",
-        date: "SUN 15/03/2026",
-        time: "19:00",
-        room: "Cinema 1",
-        seat: "F08",
-        price: "110.000đ",
+        ma_dat_ve: "TNC-77210923",
+        ten_phim: t("movie-2-title") || "MAI",
+        do_tuoi: "T18",
+        ten_rap: "TNC Vincom City Hub",
+        ngay_chieu: "SUN 15/03/2026",
+        gio_chieu: "19:00",
+        ten_phong: "Cinema 1",
+        ghe_ngoi: "F08",
+        tong_tien_thanh_toan: "110.000đ",
         poster: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=400&q=80"
     }
   ];
@@ -92,7 +92,7 @@ export default function VeCuaToiPage() {
                             <div className="w-full md:w-32 h-48 md:h-auto bg-[#eee] flex-shrink-0">
                                 <img 
                                     src={t_item.poster} 
-                                    alt={t_item.movie} 
+                                    alt={t_item.ten_phim} 
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
                                 />
                             </div>
@@ -101,31 +101,31 @@ export default function VeCuaToiPage() {
                             <div className="flex-grow p-6 md:pl-10 space-y-4 flex flex-col justify-center bg-white">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="space-y-1">
-                                        <h4 className="text-2xl font-black text-[#b11116] leading-none mb-2">{t_item.movie}</h4>
-                                        <Chip className="bg-[#b11116] text-white font-black" radius="none" size="sm">{t_item.rating}</Chip>
+                                        <h4 className="text-2xl font-black text-[#b11116] leading-none mb-2">{t_item.ten_phim}</h4>
+                                        <Chip className="bg-[#b11116] text-white font-black" radius="none" size="sm">{t_item.do_tuoi}</Chip>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("ticket-id")}</p>
-                                        <p className="text-sm font-black text-[#333]">{t_item.id}</p>
+                                        <p className="text-sm font-black text-[#333]">{t_item.ma_dat_ve}</p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
                                     <div>
                                         <p className="text-[10px] font-bold text-gray-400 uppercase">{t("cinemas")}</p>
-                                        <p className="text-[12px] font-bold text-[#444]">{t_item.cinema}</p>
+                                        <p className="text-[12px] font-bold text-[#444]">{t_item.ten_rap}</p>
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-bold text-gray-400 uppercase">{t("showtime")}</p>
-                                        <p className="text-[12px] font-bold text-[#444]">{t_item.time} | {t_item.date.split(' ').slice(1).join(' ')}</p>
+                                        <p className="text-[12px] font-bold text-[#444]">{t_item.gio_chieu} | {t_item.ngay_chieu.split(' ').slice(1).join(' ')}</p>
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-bold text-gray-400 uppercase">{t("room-seat")}</p>
-                                        <p className="text-[12px] font-bold text-[#444]">{t_item.room} | <span className="text-[#b11116]">{t_item.seat}</span></p>
+                                        <p className="text-[12px] font-bold text-[#444]">{t_item.ten_phong} | <span className="text-[#b11116]">{t_item.ghe_ngoi}</span></p>
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-bold text-gray-400 uppercase">{t("total")}</p>
-                                        <p className="text-[13px] font-black text-[#333]">{t_item.price}</p>
+                                        <p className="text-[13px] font-black text-[#333]">{t_item.tong_tien_thanh_toan}</p>
                                     </div>
                                 </div>
                             </div>
@@ -134,7 +134,7 @@ export default function VeCuaToiPage() {
                             <div className="w-full md:w-36 bg-gray-50 border-t md:border-t-0 md:border-l border-dashed border-gray-200 flex flex-col items-center justify-center p-4 space-y-2 shrink-0">
                                 <div className="w-20 h-20 bg-white border border-gray-200 p-1 shadow-inner flex items-center justify-center overflow-hidden">
                                      <img 
-                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${t_item.id}`} 
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${t_item.ma_dat_ve}`} 
                                         alt="QR" 
                                         className="w-full h-full object-contain"
                                      />
