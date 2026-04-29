@@ -52,8 +52,12 @@ All errors follow:
 
 ### GET `/api/showtimes?movieId={id}`
 - Cached in Redis when no filter
+- Response includes populated fields: `movieTitle`, `roomName`
+- Legacy Vietnamese keys: `TenPhim`, `TenPhong`
 
 ### GET `/api/showtimes/{id}`
+- Response includes populated fields: `movieTitle`, `roomName`
+- Legacy Vietnamese keys: `TenPhim`, `TenPhong`
 
 ### POST `/api/showtimes` (ADMIN, NHANVIEN)
 - Body: `movieId`, `roomId`, `startTime`, `endTime`, `basePrice`, `status`
