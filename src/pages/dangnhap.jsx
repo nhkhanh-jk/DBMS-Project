@@ -5,27 +5,58 @@ import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
 import { Link, useNavigate } from "react-router-dom";
 import TNCLayout from "@/layouts/tnc";
 import { useTranslation } from "react-i18next";
+import { apiRequest, persistAuth } from "@/utils/api";
 
 export default function DangNhapPage() {
   const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    if ((username === "admin" && password === "123456") || (username === "user" && password === "123456")) {
-      setError("");
-      // Store user info
-      const userData = {
-        name: username === "admin" ? "Administrator" : "Lê Chí",
-        username: username
-      };
-      localStorage.setItem("tnc_user", JSON.stringify(userData));
-      
-      navigate("/thanhvien");
-    } else {
+  const handleLogin = async () => {
+    if (!username || !password) {
       setError(t("login-error"));
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const isEmail = username.includes("@");
+      const payload = isEmail
+        ? { email: username, password }
+        : { username, password };
+
+      const response = await apiRequest("/auth/login", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      persistAuth(response, { username });
+      
+      // Get the user from response or localStorage to check role
+      const user = response?.profile || response?.user || response?.data?.user || (response?.token ? JSON.parse(localStorage.getItem("tnc_user")) : null);
+      
+      const userRole = (user?.VaiTro || user?.role)?.toUpperCase() || "KHACHHANG";
+
+      if (userRole === "ADMIN") {
+        localStorage.setItem("tnc_superadmin", "true");
+        navigate("/admin");
+      } else if (userRole === "QUANLY" || userRole === "MANAGER") {
+        localStorage.setItem("tnc_manager", "true");
+        navigate("/quanly");
+      } else if (userRole === "NHANVIEN" || userRole === "STAFF") {
+        navigate("/nhanvien");
+      } else {
+        navigate("/thanhvien");
+      }
+    } catch (err) {
+      setError(err.message || t("login-error"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,10 +96,11 @@ export default function DangNhapPage() {
                 {t("forgot-password")}
               </Link>
             </div>
-            <Button 
-                className="w-full bg-[#b11116] font-black text-white shadow-md hover:brightness-110"
-                onClick={handleLogin}
-                size="lg"
+            <Button
+              className="w-full bg-[#b11116] font-black text-white shadow-md hover:brightness-110"
+              onClick={handleLogin}
+              isLoading={loading}
+              size="lg"
             >
               {t("login")}
             </Button>

@@ -4,14 +4,8 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Chip } from "@heroui/chip";
+import { apiRequest } from "@/utils/api";
 import * as htmlToImage from "html-to-image";
-
-const VALID_TICKETS = {
-  "TNC-001234": { movie: "QUỶ NHẬP TRÀNG 2", seat: "C5", time: "19:00", date: "MON 23/03/2026", room: "Phòng 1", cinema: "TNC Vincom Đà Nẵng", status: "valid",   customer: "Lê Chí", total: "90.000đ", age: "T18", poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=400&q=80" },
-  "TNC-002345": { movie: "CÚ NHẢY KỲ DIỆU",  seat: "A3", time: "14:00", date: "SUN 15/03/2026", room: "Phòng 2", cinema: "TNC Vincom Đà Nẵng", status: "valid",   customer: "Phạm Thị Lan", total: "110.000đ", age: "13+", poster: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=400&q=80" },
-  "TNC-003456": { movie: "ĐÊM NGÀY XA MẸ",   seat: "E7", time: "16:45", date: "TUE 24/03/2026", room: "Phòng 1", cinema: "TNC Vincom Đà Nẵng", status: "used",    customer: "Ngô Minh Khoa", total: "85.000đ", age: "P", poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=400&q=80" },
-  "TNC-004567": { movie: "SIÊU TRỘM QUYẾT CHIẾN", seat: "B2", time: "21:30", date: "MON 23/03/2026", room: "Phòng 3", cinema: "TNC Vincom Đà Nẵng", status: "valid", customer: "Lý Thu Hà", total: "120.000đ", age: "T16", poster: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=400&q=80" },
-};
 
 const STATUS_STYLE = {
   valid:    { label: "Hợp Lệ",  icon: "OK", cls: "border-emerald-500/50 bg-emerald-500/10 shadow-[0_0_20px_rgba(52,211,153,0.15)]", text: "text-emerald-400" },
@@ -19,16 +13,11 @@ const STATUS_STYLE = {
   invalid:  { label: "Không Hợp Lệ", icon: "X", cls: "border-red-500/50 bg-red-500/10 shadow-[0_0_20px_rgba(239,68,68,0.15)]", text: "text-red-400" },
 };
 
-const RECENT_SCANS = [
-  { code: "TNC-001234", result: "valid",   time: "13:45" },
-  { code: "TNC-003456", result: "used",    time: "13:32" },
-  { code: "TNC-009999", result: "invalid", time: "13:21" },
-];
-
 export default function KiemTraVe() {
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
-  const [history, setHistory] = useState(RECENT_SCANS);
+  const [history, setHistory] = useState([]);
   const ticketRef = useRef(null);
 
   const handlePrint = async () => {
@@ -45,19 +34,62 @@ export default function KiemTraVe() {
     }
   };
 
-  const handleCheck = () => {
+  const handleCheck = async () => {
     const code = input.trim().toUpperCase();
     if (!code) return;
-    const ticket = VALID_TICKETS[code];
-    const res = ticket
-      ? { code, ...ticket }
-      : { code, status: "invalid" };
-    setResult(res);
-    setHistory((prev) => [{ code, result: res.status, time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) }, ...prev.slice(0, 9)]);
-    if (ticket?.status === "valid") {
-      VALID_TICKETS[code] = { ...ticket, status: "used" };
+    
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await apiRequest("/staff/tickets/check", {
+          method: "POST",
+          body: JSON.stringify({ ticketCode: code })
+      });
+      
+      const ticketData = res?.ticket || res?.data || res || {};
+      
+      // Normalize status from various possible keys and languages
+      const rawStatus = (res?.status || ticketData.status || "valid").toUpperCase();
+      
+      let mappedStatus = "invalid";
+      if (["ACTIVE", "VALID", "CHUA_SU_DUNG", "MOI"].includes(rawStatus)) {
+          mappedStatus = "valid";
+      } else if (["USED", "DA_SU_DUNG", "DA_DUNG"].includes(rawStatus)) {
+          mappedStatus = "used";
+      }
+
+      const newResult = {
+          code,
+          status: mappedStatus,
+          movie: ticketData.movieTitle || ticketData.movie?.TenPhim || ticketData.TenPhim || "---",
+          seat: ticketData.seatNumber || ticketData.seat || (Array.isArray(ticketData.tickets) ? ticketData.tickets.map(t => t.seatNumber).join(", ") : "---"),
+          time: ticketData.startTime || ticketData.ThoiGianBatDau || "---",
+          date: ticketData.date || (ticketData.ThoiGianBatDau ? new Date(ticketData.ThoiGianBatDau).toLocaleDateString("vi-VN") : "---"),
+          room: ticketData.roomName || ticketData.TenPhong || "---",
+          cinema: ticketData.cinemaName || ticketData.TenRap || "---",
+          customer: ticketData.customerName || ticketData.fullName || "Khách vãng lai",
+          age: ticketData.movieRating || "P",
+          poster: ticketData.moviePoster || "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=400&q=80"
+      };
+
+      setResult(newResult);
+      setHistory((prev) => [{ 
+          code, 
+          result: newResult.status, 
+          time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) 
+      }, ...prev.slice(0, 9)]);
+      setInput("");
+    } catch (err) {
+      const errResult = { code, status: "invalid" };
+      setResult(errResult);
+      setHistory((prev) => [{ 
+          code, 
+          result: "invalid", 
+          time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) 
+      }, ...prev.slice(0, 9)]);
+    } finally {
+        setLoading(false);
     }
-    setInput("");
   };
 
   return (
@@ -74,7 +106,7 @@ export default function KiemTraVe() {
             <div className="flex gap-4">
               <Input
                 type="text"
-                placeholder="VD: TNC-001234"
+                placeholder="VD: BK-1234567"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleCheck()}
@@ -86,21 +118,20 @@ export default function KiemTraVe() {
               />
               <Button
                 onClick={handleCheck}
+                isLoading={loading}
                 size="lg"
                 className="bg-[#e71a0f] text-white font-black px-10 shadow-[0_4px_15px_rgba(231,26,15,0.4)] hover:shadow-[0_4px_20px_rgba(231,26,15,0.6)]"
               >
                 Kiểm Tra
               </Button>
             </div>
-            <p className="text-xs text-white/40 mt-3 font-medium">Test data demo: TNC-001234, TNC-003456</p>
           </CardBody>
         </Card>
 
         {/* Result */}
         {result && (
           <div className="animate-in zoom-in-95 duration-300">
-            {/* TICKET UI FROM VECUATOI */}
-            {result.movie ? (
+            {result.movie && result.movie !== "---" ? (
                 <>
                 <div ref={ticketRef} className="flex flex-col md:flex-row bg-[#fcfbf7] border border-gray-200 shadow-2xl relative overflow-hidden group rounded-sm mb-4">
                     <div className="hidden md:block absolute left-[128px] top-0 bottom-0 w-px border-l-2 border-dashed border-gray-300 z-10"></div>
@@ -198,7 +229,7 @@ export default function KiemTraVe() {
                 </div>
             )}
             
-            {result.status === "invalid" && !result.movie && (
+            {result.status === "invalid" && (!result.movie || result.movie === "---") && (
                  <div className="p-4 bg-red-500/20 border-2 border-red-500/50 rounded-lg mt-4 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
                     <p className="text-red-400 text-lg font-black tracking-widest uppercase flex items-center gap-3">
                         <span className="bg-red-500/30 px-3 py-1 rounded">CẢNH BÁO</span> Mã vé giả hoặc không tồn tại trong hệ thống!

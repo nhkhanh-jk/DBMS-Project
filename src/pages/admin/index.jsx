@@ -1,19 +1,18 @@
 import AdminLayout from "@/layouts/admin";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { apiRequest } from "@/utils/api";
 
-const stats = [
-  { label: "Tổng người dùng", value: "1,284", change: "+24 tuần này", icon: "👥", color: "from-blue-600 to-blue-400" },
-  { label: "Phim đang chiếu",  value: "12",    change: "3 sắp ra mắt",  icon: "🎬", color: "from-purple-600 to-purple-400" },
-  { label: "Rạp chiếu",        value: "8",     change: "2 tỉnh thành",  icon: "🏛️", color: "from-amber-600 to-amber-400" },
-  { label: "Nhân viên",        value: "47",    change: "+2 tháng này",  icon: "🪪", color: "from-emerald-600 to-emerald-400" },
+const initialStats = [
+  { id: "users", label: "Tổng người dùng", value: "...", change: "Đang tải...", icon: "👥", color: "from-blue-600 to-blue-400" },
+  { id: "movies", label: "Phim hệ thống",  value: "...",    change: "Đang tải...",  icon: "🎬", color: "from-purple-600 to-purple-400" },
+  { id: "cinemas", label: "Rạp chiếu",        value: "...",     change: "Đang tải...",  icon: "🏛️", color: "from-amber-600 to-amber-400" },
+  { id: "staffs", label: "Nhân viên",        value: "...",     change: "Đang tải...",  icon: "🪪", color: "from-emerald-600 to-emerald-400" },
 ];
 
 const recentActivities = [
-  { time: "09:12", action: "Người dùng mới đăng ký", detail: "nguyenvanA@gmail.com" },
-  { time: "09:05", action: "Phim mới được thêm",     detail: "QUỶ NHẬP TRÀNG 3" },
-  { time: "08:47", action: "Nhân viên cập nhật",     detail: "Trần Thị B — đổi ca" },
-  { time: "08:30", action: "Rạp Hà Nội cập nhật",   detail: "Phòng 3 bảo trì" },
-  { time: "08:00", action: "Backup hệ thống",        detail: "Hoàn thành thành công" },
+  { time: "Vừa xong", action: "Hệ thống đã sẵn sàng", detail: "Dữ liệu được cập nhật từ API" },
+  { time: "Hôm nay", action: "Kiểm tra bảo mật",     detail: "Hoàn thành quét định kỳ" },
 ];
 
 const quickLinks = [
@@ -24,6 +23,39 @@ const quickLinks = [
 ];
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState(initialStats);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [users, movies, cinemas, staffs] = await Promise.all([
+          apiRequest("/admin/users").catch(() => ({ data: [] })),
+          apiRequest("/admin/movies").catch(() => ({ data: [] })),
+          apiRequest("/admin/cinemas").catch(() => ({ data: [] })),
+          apiRequest("/admin/staffs").catch(() => ({ data: [] })),
+        ]);
+
+        const getCount = (res) => {
+          if (Array.isArray(res)) return res.length;
+          if (Array.isArray(res?.data)) return res.data.length;
+          if (typeof res?.total === 'number') return res.total;
+          return 0;
+        };
+
+        setStats([
+          { ...initialStats[0], value: getCount(users).toLocaleString(), change: "Cập nhật trực tiếp" },
+          { ...initialStats[1], value: getCount(movies).toLocaleString(), change: "Toàn hệ thống" },
+          { ...initialStats[2], value: getCount(cinemas).toLocaleString(), change: "Đang hoạt động" },
+          { ...initialStats[3], value: getCount(staffs).toLocaleString(), change: "Đã xác thực" },
+        ]);
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -35,7 +67,7 @@ export default function AdminDashboard() {
         {/* KPI cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {stats.map((s) => (
-            <div key={s.label} className="bg-[#1e293b] rounded-xl p-5 border border-white/5">
+            <div key={s.id} className="bg-[#1e293b] rounded-xl p-5 border border-white/5">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-white/50 font-semibold uppercase tracking-wider">{s.label}</p>
@@ -70,7 +102,7 @@ export default function AdminDashboard() {
 
           {/* Recent activity */}
           <div className="lg:col-span-2 bg-[#1e293b] rounded-xl p-5 border border-white/5">
-            <h3 className="text-sm font-black text-white/80 uppercase tracking-wider mb-4">Hoạt động gần đây</h3>
+            <h3 className="text-sm font-black text-white/80 uppercase tracking-wider mb-4">Hệ thống</h3>
             <div className="space-y-3">
               {recentActivities.map((a, i) => (
                 <div key={i} className="flex items-start gap-3 py-2 border-b border-white/5 last:border-0">

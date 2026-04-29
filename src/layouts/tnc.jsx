@@ -3,6 +3,8 @@ import { Button } from "@heroui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
+import { apiRequest, clearAuth } from "@/utils/api";
+
 export default function TNCLayout({ children }) {
   const { t, i18n } = useTranslation();
   const [user, setUser] = useState(null);
@@ -16,7 +18,7 @@ export default function TNCLayout({ children }) {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("tnc_user");
+    clearAuth();
     setUser(null);
     navigate("/");
   };

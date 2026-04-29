@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@heroui/button";
+import { clearAuth } from "@/utils/api";
 
 export default function AdminLayout({ children }) {
   const location = useLocation();
@@ -46,7 +47,7 @@ export default function AdminLayout({ children }) {
           </div>
           <Button 
             onClick={() => {
-              localStorage.removeItem("tnc_superadmin");
+              clearAuth();
               window.location.href = "/admin/login";
             }}
             className="w-full bg-[#1e293b] text-white hover:bg-[#334155] font-black"

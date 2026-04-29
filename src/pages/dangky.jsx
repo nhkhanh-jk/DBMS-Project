@@ -1,28 +1,54 @@
+import { useState } from "react";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
-import { Select, SelectItem } from "@heroui/select";
-import { RadioGroup, Radio } from "@heroui/radio";
 import { Link } from "react-router-dom";
 import TNCLayout from "@/layouts/tnc";
 import { useTranslation } from "react-i18next";
-
-const provinces = [
-  "Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Cần Thơ", 
-  "An Giang", "Bà Rịa - Vũng Tàu", "Bắc Giang", "Bắc Kạn", "Bạc Liêu", 
-  "Bắc Ninh", "Bến Tre", "Bình Định", "Bình Dương", "Bình Phước", 
-  "Bình Thuận", "Cà Mau", "Cao Bằng", "Đắk Lắk", "Đắk Nông", 
-  "Điện Biên", "Đồng Nai", "Đồng Tháp", "Gia Lai", "Hà Giang", 
-  "Hà Nam", "Hà Tĩnh", "Hải Dương", "Hậu Giang", "Hòa Bình", 
-  "Hưng Yên", "Khánh Hòa", "Kiên Giang", "Kon Tum"
-];
-
-const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
-const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
-const years = Array.from({ length: 80 }, (_, i) => (2024 - i).toString());
+import { apiRequest } from "@/utils/api";
 
 export default function DangKyPage() {
   const { t } = useTranslation();
+  const [form, setForm] = useState({ fullName: "", phone: "", email: "", password: "", confirmPassword: "" });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const onChange = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleRegister = async () => {
+    if (!form.fullName || !form.phone || !form.email || !form.password) {
+      setError("Vui lòng nhập đủ thông tin bắt buộc.");
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      setError("Mật khẩu xác nhận không khớp.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      await apiRequest("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({
+          fullName: form.fullName,
+          email: form.email,
+          phone: form.phone,
+          password: form.password,
+        }),
+      });
+      setSuccess("Đăng ký thành công. Bạn có thể đăng nhập ngay.");
+      setForm({ fullName: "", phone: "", email: "", password: "", confirmPassword: "" });
+    } catch (err) {
+      setError(err.message || "Đăng ký thất bại.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <TNCLayout>
       <section className="flex min-h-[90vh] items-center justify-center py-10 bg-[#fcfbf7]">
@@ -32,93 +58,18 @@ export default function DangKyPage() {
             <p className="text-sm text-default-500">{t("create-account-desc")}</p>
           </CardHeader>
           <CardBody className="overflow-visible py-6 space-y-6">
+            {error && <div className="bg-red-50 text-red-600 p-3 text-sm rounded-sm border border-red-200 font-medium">{error}</div>}
+            {success && <div className="bg-green-50 text-green-700 p-3 text-sm rounded-sm border border-green-200 font-medium">{success}</div>}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                isRequired
-                label={t("full-name")}
-                placeholder={t("fullname-placeholder")}
-                type="text"
-                variant="bordered"
-              />
-              <Input
-                isRequired
-                label={t("phone-number")}
-                placeholder={t("phone-placeholder")}
-                type="tel"
-                variant="bordered"
-              />
+              <Input isRequired label={t("full-name")} value={form.fullName} onValueChange={(v) => onChange("fullName", v)} variant="bordered" />
+              <Input isRequired label={t("phone-number")} value={form.phone} onValueChange={(v) => onChange("phone", v)} type="tel" variant="bordered" />
             </div>
-            
-            <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700">{t("birthday")}</p>
-                <div className="grid grid-cols-3 gap-2">
-                    <Select placeholder={t("day") || "Day"} variant="bordered" aria-label="Ngày sinh">
-                        {days.map((d) => (
-                            <SelectItem key={d}>{d}</SelectItem>
-                        ))}
-                    </Select>
-                    <Select placeholder={t("month") || "Month"} variant="bordered" aria-label="Tháng sinh">
-                        {months.map((m) => (
-                            <SelectItem key={m}>{m}</SelectItem>
-                        ))}
-                    </Select>
-                    <Select placeholder={t("year") || "Year"} variant="bordered" aria-label="Năm sinh">
-                        {years.map((y) => (
-                            <SelectItem key={y}>{y}</SelectItem>
-                        ))}
-                    </Select>
-                </div>
-            </div>
-
-            <RadioGroup
-                label={t("gender")}
-                orientation="horizontal"
-                color="danger"
-                defaultValue="male"
-            >
-                <Radio value="male">{t("male")}</Radio>
-                <Radio value="female">{t("female")}</Radio>
-            </RadioGroup>
-
-            <Select
-              isRequired
-              label={t("address") + " (Tỉnh/Thành phố)"}
-              placeholder={t("select-province") || "Select province"}
-              variant="bordered"
-            >
-              {provinces.map((province) => (
-                <SelectItem key={province}>
-                  {province}
-                </SelectItem>
-              ))}
-            </Select>
-
-            <Input
-              isRequired
-              label="Email"
-              placeholder={t("enter-email") || "Enter email address"}
-              type="email"
-              variant="bordered"
-            />
-            
+            <Input isRequired label="Email" value={form.email} onValueChange={(v) => onChange("email", v)} type="email" variant="bordered" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                isRequired
-                label={t("password")}
-                placeholder={t("password-placeholder")}
-                type="password"
-                variant="bordered"
-                />
-                <Input
-                isRequired
-                label={t("confirm-password-label")}
-                placeholder={t("enter-password")}
-                type="password"
-                variant="bordered"
-                />
+              <Input isRequired label={t("password")} value={form.password} onValueChange={(v) => onChange("password", v)} type="password" variant="bordered" />
+              <Input isRequired label={t("confirm-password-label")} value={form.confirmPassword} onValueChange={(v) => onChange("confirmPassword", v)} type="password" variant="bordered" />
             </div>
-
-            <Button className="w-full bg-[#f6c344] font-black text-[#651014] shadow-md mt-4" size="lg">
+            <Button className="w-full bg-[#f6c344] font-black text-[#651014] shadow-md mt-4" size="lg" isLoading={loading} onClick={handleRegister}>
               {t("register-submit")}
             </Button>
           </CardBody>

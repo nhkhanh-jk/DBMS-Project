@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@heroui/button";
+import { clearAuth } from "@/utils/api";
 
 export default function ManagerLayout({ children }) {
   const location = useLocation();
@@ -47,7 +48,7 @@ export default function ManagerLayout({ children }) {
           </div>
           <Button 
             onClick={() => {
-              localStorage.removeItem("tnc_manager");
+              clearAuth();
               window.location.href = "/quanly/login";
             }}
             className="w-full bg-[#1e293b] text-white hover:bg-[#334155] font-black"

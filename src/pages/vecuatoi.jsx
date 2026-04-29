@@ -1,166 +1,126 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TNCLayout from "@/layouts/tnc";
 import { Chip } from "@heroui/chip";
+import { apiRequest } from "@/utils/api";
 import { useTranslation } from "react-i18next";
 
 export default function VeCuaToiPage() {
   const { t } = useTranslation();
   const [tab, setTab] = useState("ACTIVE");
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const activeTickets = [
-    {
-        ma_dat_ve: "TNC-88291038",
-        ten_phim: t("movie-1-title") || "QUỶ NHẬP TRÀNG 2",
-        do_tuoi: "T18",
-        ten_rap: "TNC Vincom Đà Nẵng",
-        ngay_chieu: "MON 23/03/2026",
-        gio_chieu: "22:15",
-        ten_phong: "Cinema 3",
-        ghe_ngoi: "H12, H13",
-        tong_tien_thanh_toan: "240.000đ",
-        poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=400&q=80"
-    }
-  ];
-
-  const pastTickets = [
-    {
-        ma_dat_ve: "TNC-77210923",
-        ten_phim: t("movie-2-title") || "MAI",
-        do_tuoi: "T18",
-        ten_rap: "TNC Vincom City Hub",
-        ngay_chieu: "SUN 15/03/2026",
-        gio_chieu: "19:00",
-        ten_phong: "Cinema 1",
-        ghe_ngoi: "F08",
-        tong_tien_thanh_toan: "110.000đ",
-        poster: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=400&q=80"
-    }
-  ];
-
-  const currentList = tab === "ACTIVE" ? activeTickets : pastTickets;
+  useEffect(() => {
+    setLoading(true);
+    apiRequest(`/users/tickets?status=${tab}`)
+      .then((res) => {
+        const list = res?.items || (Array.isArray(res) ? res : (res?.data || []));
+        setTickets(list.map(t => ({
+            id: t._id || t.id,
+            code: t.ticketCode || t.bookingCode || "---",
+            movie: t.movieTitle || t.movie?.TenPhim || "---",
+            cinema: t.cinemaName || t.cinema?.TenRap || "---",
+            room: t.roomName || "---",
+            seats: Array.isArray(t.seats) ? t.seats.join(", ") : (t.seatNumbers || t.ViTriGhe || "---"),
+            time: t.startTime || t.showtime?.GioBatDau || "---",
+            date: t.date || (t.showtime?.NgayChieu ? new Date(t.showtime.NgayChieu).toLocaleDateString("vi-VN") : "---"),
+            status: t.status || t.TrangThai || "ACTIVE",
+            poster: t.moviePoster || t.movie?.HinhAnh || "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=200&q=60"
+        })));
+      })
+      .catch((e) => {
+          console.error("Fetch tickets failed", e);
+          setError(e.message || "Không tải được danh sách vé");
+      })
+      .finally(() => setLoading(false));
+  }, [tab]);
 
   return (
     <TNCLayout>
       <section className="bg-[#fcfbf7] min-h-screen py-10 md:py-16">
         <div className="mx-auto max-w-5xl px-4">
+          <h2 className="text-3xl font-black uppercase mb-8 border-b-2 border-black pb-4">{t("my-tickets") || "Vé Của Tôi"}</h2>
           
-          {/* Header */}
-          <div className="flex items-center justify-center mb-10">
-            <hr className="flex-grow border-gray-400" />
-            <h2 
-              className="mx-6 text-4xl font-black uppercase tracking-[0.2em] font-serif text-[#333]" 
-              style={{ textShadow: "2px 2px 0 #fff, 3px 3px 0 #ccc" }}
+          <div className="flex gap-2 mb-8 bg-gray-200 p-1 rounded-sm w-fit">
+            <button 
+                onClick={() => setTab("ACTIVE")} 
+                className={`px-6 py-2 text-sm font-black uppercase transition-all ${tab === "ACTIVE" ? "bg-[#e71a0f] text-white shadow-md" : "text-gray-600 hover:text-black"}`}
             >
-              {t("my-tickets")}
-            </h2>
-            <hr className="flex-grow border-gray-400" />
+                {t("valid-tickets") || "Vé hiệu lực"}
+            </button>
+            <button 
+                onClick={() => setTab("HISTORY")} 
+                className={`px-6 py-2 text-sm font-black uppercase transition-all ${tab === "HISTORY" ? "bg-[#e71a0f] text-white shadow-md" : "text-gray-600 hover:text-black"}`}
+            >
+                {t("history") || "Lịch sử"}
+            </button>
           </div>
 
-          {/* Tab Switcher */}
-          <div className="flex justify-center mb-12 text-[13px]">
-            <div className="flex bg-[#e1e1e1] p-1 rounded-sm shadow-inner">
-                <button 
-                    onClick={() => setTab("ACTIVE")}
-                    className={`px-8 py-2 font-black uppercase tracking-wider transition-all
-                        ${tab === "ACTIVE" ? "bg-[#b11116] text-white shadow-md" : "text-[#666] hover:text-black"} `}
-                >
-                    {t("active-tickets")}
-                </button>
-                <button 
-                    onClick={() => setTab("HISTORY")}
-                    className={`px-8 py-2 font-black uppercase tracking-wider transition-all
-                        ${tab === "HISTORY" ? "bg-[#b11116] text-white shadow-md" : "text-[#666] hover:text-black"} `}
-                >
-                    {t("my-bookings")}
-                </button>
-            </div>
-          </div>
+          {error && <div className="mb-8 p-4 bg-red-50 border-2 border-red-200 text-red-600 font-bold uppercase tracking-tight">{error}</div>}
+          
+          {loading ? (
+              <div className="py-20 text-center text-gray-400 font-bold uppercase tracking-widest animate-pulse">Đang tải danh sách vé...</div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6">
+                {tickets.map((ticket, idx) => (
+                <div key={ticket.id || idx} className="flex flex-col md:flex-row bg-white border-2 border-black shadow-[8px_8px_0px_rgba(0,0,0,0.1)] relative overflow-hidden group">
+                    {/* Poster */}
+                    <div className="w-full md:w-32 h-48 md:h-auto flex-shrink-0 bg-gray-100">
+                        <img src={ticket.poster} alt={ticket.movie} className="w-full h-full object-cover" />
+                    </div>
 
-          {/* Ticket List */}
-          <div className="space-y-12 max-w-4xl mx-auto">
-            {currentList.length > 0 ? (
-                currentList.map((t_item, idx) => (
-                    <div key={idx} className="space-y-4">
-                        {/* THE DISPLAY TICKET CONTAINER */}
-                        <div 
-                            className="flex flex-col md:flex-row bg-white border border-gray-200 shadow-xl relative overflow-hidden group rounded-sm"
-                        >
-                            {/* Decorative Perforation Left */}
-                            <div className="hidden md:block absolute left-[128px] top-0 bottom-0 w-px border-l-2 border-dashed border-gray-100 z-10"></div>
-                            
-                            {/* Movie Poster Section */}
-                            <div className="w-full md:w-32 h-48 md:h-auto bg-[#eee] flex-shrink-0">
-                                <img 
-                                    src={t_item.poster} 
-                                    alt={t_item.ten_phim} 
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
-                                />
+                    {/* Content */}
+                    <div className="flex-grow p-6 flex flex-col justify-center">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-xl font-black text-[#b11116] uppercase leading-tight">{ticket.movie}</h3>
+                                <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">{ticket.cinema}</p>
                             </div>
-
-                            {/* Main Info Section */}
-                            <div className="flex-grow p-6 md:pl-10 space-y-4 flex flex-col justify-center bg-white">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="space-y-1">
-                                        <h4 className="text-2xl font-black text-[#b11116] leading-none mb-2">{t_item.ten_phim}</h4>
-                                        <Chip className="bg-[#b11116] text-white font-black" radius="none" size="sm">{t_item.do_tuoi}</Chip>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t("ticket-id")}</p>
-                                        <p className="text-sm font-black text-[#333]">{t_item.ma_dat_ve}</p>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
-                                    <div>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase">{t("cinemas")}</p>
-                                        <p className="text-[12px] font-bold text-[#444]">{t_item.ten_rap}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase">{t("showtime")}</p>
-                                        <p className="text-[12px] font-bold text-[#444]">{t_item.gio_chieu} | {t_item.ngay_chieu.split(' ').slice(1).join(' ')}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase">{t("room-seat")}</p>
-                                        <p className="text-[12px] font-bold text-[#444]">{t_item.ten_phong} | <span className="text-[#b11116]">{t_item.ghe_ngoi}</span></p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase">{t("total")}</p>
-                                        <p className="text-[13px] font-black text-[#333]">{t_item.tong_tien_thanh_toan}</p>
-                                    </div>
-                                </div>
+                            <div className="text-right">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase">Mã vé</p>
+                                <p className="text-sm font-black font-mono">{ticket.code}</p>
                             </div>
+                        </div>
 
-                            {/* QR Section */}
-                            <div className="w-full md:w-36 bg-gray-50 border-t md:border-t-0 md:border-l border-dashed border-gray-200 flex flex-col items-center justify-center p-4 space-y-2 shrink-0">
-                                <div className="w-20 h-20 bg-white border border-gray-200 p-1 shadow-inner flex items-center justify-center overflow-hidden">
-                                     <img 
-                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${t_item.ma_dat_ve}`} 
-                                        alt="QR" 
-                                        className="w-full h-full object-contain"
-                                     />
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-[9px] font-black text-[#b11116] uppercase tracking-tighter">{t("valid-until")}</p>
-                                </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-2 border-t border-gray-100 mt-2">
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase">Suất chiếu</p>
+                                <p className="text-xs font-black">{ticket.time} | {ticket.date}</p>
                             </div>
-
-                            {/* Ticket Circles (Holes) */}
-                            <div className="hidden md:block absolute left-[122px] -top-3 w-4 h-4 rounded-full bg-[#fcfbf7] border border-gray-200"></div>
-                            <div className="hidden md:block absolute left-[122px] -bottom-3 w-4 h-4 rounded-full bg-[#fcfbf7] border border-gray-200"></div>
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase">Phòng & Ghế</p>
+                                <p className="text-xs font-black">{ticket.room} | <span className="text-[#b11116]">{ticket.seats}</span></p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase">Trạng thái</p>
+                                <Chip 
+                                    className="font-black text-[10px]" 
+                                    color={ticket.status === "ACTIVE" ? "success" : "default"} 
+                                    variant="flat" 
+                                    size="sm"
+                                    radius="none"
+                                >
+                                    {ticket.status === "ACTIVE" ? "HỢP LỆ" : "ĐÃ DÙNG/HẾT HẠN"}
+                                </Chip>
+                            </div>
                         </div>
                     </div>
-                ))
-            ) : (
-                <div className="text-center py-20 bg-white border border-dashed border-gray-300 rounded-lg">
-                    <span className="text-4xl block mb-4">🎫</span>
-                    <p className="text-gray-400 font-medium italic">{t("no-tickets")}</p>
+                    
+                    {/* Decorations */}
+                    <div className="hidden md:block absolute left-[122px] -top-3 w-5 h-5 rounded-full bg-[#fcfbf7] border-2 border-black"></div>
+                    <div className="hidden md:block absolute left-[122px] -bottom-3 w-5 h-5 rounded-full bg-[#fcfbf7] border-2 border-black"></div>
                 </div>
-            )}
-          </div>
-
-          <div className="mt-20 text-center">
-            <p className="text-sm text-gray-500 italic mb-4">{t("hotline-support")}</p>
-          </div>
+                ))}
+                
+                {tickets.length === 0 && (
+                    <div className="py-20 text-center border-2 border-dashed border-gray-300 rounded-lg">
+                        <p className="text-gray-400 font-bold uppercase tracking-widest">Bạn chưa có vé nào trong mục này</p>
+                        <p className="text-sm text-gray-400 mt-2 italic">Hãy đặt vé và cùng trải nghiệm phim hay tại TNC!</p>
+                    </div>
+                )}
+            </div>
+          )}
         </div>
       </section>
     </TNCLayout>

@@ -47,8 +47,9 @@ import ManagerLogin from "@/pages/quanly/login";
 const StaffProtectedRoute = ({ children }) => {
   const raw = localStorage.getItem("tnc_user");
   const user = raw ? JSON.parse(raw) : null;
+  const role = (user?.VaiTro || user?.role)?.toUpperCase();
   
-  if (!user || user.role !== "staff") {
+  if (!user || (role !== "NHANVIEN" && role !== "STAFF")) {
     return <Navigate to="/nhanvien/login" replace />;
   }
   return children;
@@ -56,8 +57,12 @@ const StaffProtectedRoute = ({ children }) => {
 
 // Super Admin Protected Route
 const SuperAdminProtectedRoute = ({ children }) => {
-  const isSuperAdmin = localStorage.getItem("tnc_superadmin");
-  if (!isSuperAdmin) {
+  const raw = localStorage.getItem("tnc_user");
+  const user = raw ? JSON.parse(raw) : null;
+  const isSuperAdmin = localStorage.getItem("tnc_superadmin") === "true";
+  const role = (user?.VaiTro || user?.role)?.toUpperCase();
+  
+  if (!isSuperAdmin && (!user || role !== "ADMIN")) {
     return <Navigate to="/admin/login" replace />;
   }
   return children;
@@ -65,8 +70,12 @@ const SuperAdminProtectedRoute = ({ children }) => {
 
 // Manager Protected Route
 const ManagerProtectedRoute = ({ children }) => {
-  const isManager = localStorage.getItem("tnc_manager");
-  if (!isManager) {
+  const raw = localStorage.getItem("tnc_user");
+  const user = raw ? JSON.parse(raw) : null;
+  const isManager = localStorage.getItem("tnc_manager") === "true";
+  const role = (user?.VaiTro || user?.role)?.toUpperCase();
+  
+  if (!isManager && (!user || (role !== "QUANLY" && role !== "MANAGER"))) {
     return <Navigate to="/quanly/login" replace />;
   }
   return children;
