@@ -1,0 +1,33 @@
+{
+  "name": "mern-backend-folder",
+  "version": "1.0.0",
+  "description": "Hệ thống quản lý rạp chiếu phim tích hợp xử lý tác vụ nền và bộ nhớ đệm.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18",
+    "mongoose": "^8",
+    "ioredis": "^5",
+    "bullmq": "^5",
+    "jsonwebtoken": "^9",
+    "bcryptjs": "^2.4",
+    "nodemailer": "^6",
+    "cors": "^2",
+    "helmet": "^7",
+    "dotenv": "^16"
+  },
+  "devDependencies": {
+    "jest": "^29",
+    "supertest": "^6",
+    "nodemon": "^3"
+  },
+  "packageManager": "pnpm@10.33.4"
+}
