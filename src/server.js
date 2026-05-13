@@ -1,8 +1,10 @@
-const { createApp } = require('./src/app');
-const { connectDB } = require('./src/config/db');
-const { redis } = require('./src/config/redis');
-const { env } = require('./src/config/env');
-const { scheduleShowtimeUpdates } = require('./src/workers/showtimeScheduler');
+const { createApp } = require('./app');
+const { connectDB } = require('./config/db');
+const { redis } = require('./config/redis');
+const env = require('./config/env');
+const { scheduleShowtimeUpdates } = require('./workers/showtimeScheduler');
+
+console.log('Environment variables:', env);
 
 const startServer = async () => {
   try {
@@ -17,6 +19,7 @@ const startServer = async () => {
 
     const app = createApp();
     const PORT = env.port;
+    console.log('Port from env:', PORT, 'type:', typeof PORT);
 
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

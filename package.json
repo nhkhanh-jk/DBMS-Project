@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "test": "pnpm exec jest",
+    "test:watch": "pnpm exec jest --watch"
   },
   "keywords": [],
   "author": "",

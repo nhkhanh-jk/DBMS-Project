@@ -1,0 +1,26 @@
+const express = require('express');
+const router = express.Router();
+const bookingService = require('../services/bookingService');
+const { requireAuth } = require('../middleware/auth');
+
+// POST /api/bookings (JWT)
+router.post('/', requireAuth, async (req, res, next) => {
+  try {
+    const result = await bookingService.createBooking(req.body, req.user);
+    res.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// GET /api/bookings/:id (JWT)
+router.get('/:id', requireAuth, async (req, res, next) => {
+  try {
+    const result = await bookingService.getBookingById(req.params.id, req.user);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+module.exports = router;
