@@ -6,6 +6,7 @@ import { Chip } from "@heroui/chip";
 import { useTranslation } from "react-i18next";
 import movies from "../data/movies";
 import { slugify } from "@/utils/slugify";
+import { translateGenre, translateRegion } from "@/utils/localize";
 
 
 
@@ -14,7 +15,7 @@ const VIP_SURCHARGE = 20000;
 const SWEETBOX_SURCHARGE = 40000;
 
 export default function PhimChiTietPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { slug } = useParams();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingStep, setBookingStep] = useState("schedule");
@@ -187,7 +188,7 @@ export default function PhimChiTietPage() {
                 </div>
                 <div className="grid grid-cols-[120px_1fr] text-sm md:text-md">
                     <span className="font-black text-[#333]">{t("genre")}:</span>
-                    <span className="text-gray-700 font-bold">{movie.genre}</span>
+                    <span className="text-gray-700 font-bold">{translateGenre(movie.genre, i18n.language)}</span>
                 </div>
                 <div className="grid grid-cols-[120px_1fr] text-sm md:text-md">
                     <span className="font-black text-[#333]">{t("release-date")}:</span>
@@ -268,7 +269,7 @@ export default function PhimChiTietPage() {
                             </div>
                             <div className="px-6 py-4 flex gap-4 border-b border-gray-200 bg-white">
                                 {Object.keys(cinemasByRegion).map(reg => (
-                                    <Button key={reg} size="sm" radius="none" onClick={() => setSelectedRegion(reg)} className={`${selectedRegion === reg ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'} font-black px-4`}>{reg}</Button>
+                                    <Button key={reg} size="sm" radius="none" onClick={() => setSelectedRegion(reg)} className={`${selectedRegion === reg ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'} font-black px-4`}>{translateRegion(reg, i18n.language)}</Button>
                                 ))}
                             </div>
                             <div className="p-6 space-y-12">

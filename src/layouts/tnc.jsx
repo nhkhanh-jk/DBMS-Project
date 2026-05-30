@@ -30,13 +30,7 @@ export default function TNCLayout({ children }) {
 
       {/* Topbar */}
       <div className="border-b border-[#d7cdbb] bg-[#efe6d5] py-2 md:py-3 shadow-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 pl-[90px] md:pl-[150px]">
-          <div className="flex items-center gap-4 text-[13px] font-bold text-[#555]">
-            <Link to="/uudai" className="hover:text-[#b11116] transition-colors">{t("promotions")}</Link>
-            <span className="hidden md:inline text-gray-300">|</span>
-            <Link to="/thanhvien" className="hover:text-[#b11116] transition-colors">{t("membership")}</Link>
-          </div>
-          
+        <div className="mx-auto flex max-w-7xl items-center justify-end px-4 pl-[90px] md:pl-[150px]">
           <div className="flex items-center gap-2 md:gap-4">
             {!user ? (
               <>

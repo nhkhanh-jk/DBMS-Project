@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
@@ -22,7 +23,72 @@ const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
 const years = Array.from({ length: 80 }, (_, i) => (2024 - i).toString());
 
 export default function DangKyPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const [fullName, setFullName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [day, setDay] = useState("");
+  const [month, setMonth] = useState("");
+  const [year, setYear] = useState("");
+  const [gender, setGender] = useState("male");
+  const [province, setProvince] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [errors, setErrors] = useState({});
+
+  const handleRegister = (e) => {
+    if (e) e.preventDefault();
+    const newErrors = {};
+
+    if (!fullName.trim()) {
+      newErrors.fullName = i18n.language === "vi-VN" ? "Vui lòng nhập họ và tên." : "Please enter your full name.";
+    }
+
+    if (!phoneNumber.trim()) {
+      newErrors.phoneNumber = i18n.language === "vi-VN" ? "Vui lòng nhập số điện thoại." : "Please enter your phone number.";
+    } else if (!/^\d{10}$/.test(phoneNumber.trim())) {
+      newErrors.phoneNumber = i18n.language === "vi-VN" ? "Số điện thoại phải có 10 chữ số." : "Phone number must be 10 digits.";
+    }
+
+    if (!day || !month || !year) {
+      newErrors.birthday = i18n.language === "vi-VN" ? "Vui lòng chọn đầy đủ ngày, tháng, năm sinh." : "Please select your full date of birth.";
+    }
+
+    if (!email.trim()) {
+      newErrors.email = i18n.language === "vi-VN" ? "Vui lòng nhập email." : "Please enter email.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      if (!email.includes("@")) {
+        newErrors.email = i18n.language === "vi-VN" 
+          ? `Vui lòng bao gồm '@' trong địa chỉ email. '${email}' bị thiếu '@'.` 
+          : `Please include an '@' in the email address. '${email}' is missing an '@'.`;
+      } else {
+        newErrors.email = i18n.language === "vi-VN" ? "Địa chỉ email không hợp lệ." : "Invalid email address.";
+      }
+    }
+
+    if (!password) {
+      newErrors.password = i18n.language === "vi-VN" ? "Vui lòng nhập mật khẩu." : "Please enter password.";
+    } else if (password.length < 6) {
+      newErrors.password = i18n.language === "vi-VN" ? "Mật khẩu phải tối thiểu 6 ký tự." : "Password must be at least 6 characters.";
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = i18n.language === "vi-VN" ? "Vui lòng xác nhận mật khẩu." : "Please confirm your password.";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = i18n.language === "vi-VN" ? "Mật khẩu xác nhận không khớp." : "Confirm password does not match.";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
+      // Mock successful registration
+      alert(i18n.language === "vi-VN" ? "Đăng ký thành công!" : "Registration successful!");
+      window.location.href = "/dangnhap";
+    }
+  };
+
   return (
     <TNCLayout>
       <section className="flex min-h-[90vh] items-center justify-center py-10 bg-[#fcfbf7]">
@@ -31,96 +97,149 @@ export default function DangKyPage() {
             <h1 className="text-2xl font-black text-[#b11116] uppercase tracking-wide">{t("registration")}</h1>
             <p className="text-sm text-default-500">{t("create-account-desc")}</p>
           </CardHeader>
-          <CardBody className="overflow-visible py-6 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardBody className="overflow-visible py-6">
+            <form noValidate onSubmit={handleRegister} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  isRequired
+                  label={t("full-name")}
+                  placeholder={t("fullname-placeholder")}
+                  type="text"
+                  variant="bordered"
+                  value={fullName}
+                  onValueChange={setFullName}
+                  isInvalid={!!errors.fullName}
+                  errorMessage={errors.fullName}
+                />
+                <Input
+                  isRequired
+                  label={t("phone-number")}
+                  placeholder={t("phone-placeholder")}
+                  type="tel"
+                  variant="bordered"
+                  value={phoneNumber}
+                  onValueChange={setPhoneNumber}
+                  isInvalid={!!errors.phoneNumber}
+                  errorMessage={errors.phoneNumber}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700">
+                    {t("birthday")} <span className="text-red-500">*</span>
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                      <Select 
+                        placeholder={t("day") || "Day"} 
+                        variant="bordered" 
+                        aria-label={t("day")}
+                        selectedKeys={day ? [day] : []}
+                        onSelectionChange={(keys) => setDay(Array.from(keys)[0])}
+                        isInvalid={!!errors.birthday}
+                      >
+                          {days.map((d) => (
+                              <SelectItem key={d}>{d}</SelectItem>
+                          ))}
+                      </Select>
+                      <Select 
+                        placeholder={t("month") || "Month"} 
+                        variant="bordered" 
+                        aria-label={t("month")}
+                        selectedKeys={month ? [month] : []}
+                        onSelectionChange={(keys) => setMonth(Array.from(keys)[0])}
+                        isInvalid={!!errors.birthday}
+                      >
+                          {months.map((m) => (
+                              <SelectItem key={m}>{m}</SelectItem>
+                          ))}
+                      </Select>
+                      <Select 
+                        placeholder={t("year") || "Year"} 
+                        variant="bordered" 
+                        aria-label={t("year")}
+                        selectedKeys={year ? [year] : []}
+                        onSelectionChange={(keys) => setYear(Array.from(keys)[0])}
+                        isInvalid={!!errors.birthday}
+                      >
+                          {years.map((y) => (
+                              <SelectItem key={y}>{y}</SelectItem>
+                          ))}
+                      </Select>
+                  </div>
+                  {errors.birthday && (
+                    <p className="text-xs text-[#f31260] font-medium mt-1">
+                      {errors.birthday}
+                    </p>
+                  )}
+              </div>
+
+              <RadioGroup
+                  label={t("gender")}
+                  orientation="horizontal"
+                  color="danger"
+                  value={gender}
+                  onValueChange={setGender}
+              >
+                  <Radio value="male">{t("male")}</Radio>
+                  <Radio value="female">{t("female")}</Radio>
+              </RadioGroup>
+
+              <Select
+                isRequired
+                label={t("address") + (i18n.language === "vi-VN" ? " (Tỉnh/Thành phố)" : " (Province/City)")}
+                placeholder={t("select-province") || "Select province"}
+                variant="bordered"
+                selectedKeys={province ? [province] : []}
+                onSelectionChange={(keys) => setProvince(Array.from(keys)[0])}
+              >
+                {provinces.map((province) => (
+                  <SelectItem key={province}>
+                    {province}
+                  </SelectItem>
+                ))}
+              </Select>
+
               <Input
                 isRequired
-                label={t("full-name")}
-                placeholder={t("fullname-placeholder")}
+                label="Email"
+                placeholder={t("enter-email") || "Enter email address"}
                 type="text"
                 variant="bordered"
+                value={email}
+                onValueChange={setEmail}
+                isInvalid={!!errors.email}
+                errorMessage={errors.email}
               />
-              <Input
-                isRequired
-                label={t("phone-number")}
-                placeholder={t("phone-placeholder")}
-                type="tel"
-                variant="bordered"
-              />
-            </div>
-            
-            <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-700">{t("birthday")}</p>
-                <div className="grid grid-cols-3 gap-2">
-                    <Select placeholder={t("day") || "Day"} variant="bordered" aria-label="Ngày sinh">
-                        {days.map((d) => (
-                            <SelectItem key={d}>{d}</SelectItem>
-                        ))}
-                    </Select>
-                    <Select placeholder={t("month") || "Month"} variant="bordered" aria-label="Tháng sinh">
-                        {months.map((m) => (
-                            <SelectItem key={m}>{m}</SelectItem>
-                        ))}
-                    </Select>
-                    <Select placeholder={t("year") || "Year"} variant="bordered" aria-label="Năm sinh">
-                        {years.map((y) => (
-                            <SelectItem key={y}>{y}</SelectItem>
-                        ))}
-                    </Select>
-                </div>
-            </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    isRequired
+                    label={t("password")}
+                    placeholder={t("password-placeholder")}
+                    type="password"
+                    variant="bordered"
+                    value={password}
+                    onValueChange={setPassword}
+                    isInvalid={!!errors.password}
+                    errorMessage={errors.password}
+                  />
+                  <Input
+                    isRequired
+                    label={t("confirm-password-label")}
+                    placeholder={t("enter-password")}
+                    type="password"
+                    variant="bordered"
+                    value={confirmPassword}
+                    onValueChange={setConfirmPassword}
+                    isInvalid={!!errors.confirmPassword}
+                    errorMessage={errors.confirmPassword}
+                  />
+              </div>
 
-            <RadioGroup
-                label={t("gender")}
-                orientation="horizontal"
-                color="danger"
-                defaultValue="male"
-            >
-                <Radio value="male">{t("male")}</Radio>
-                <Radio value="female">{t("female")}</Radio>
-            </RadioGroup>
-
-            <Select
-              isRequired
-              label={t("address") + " (Tỉnh/Thành phố)"}
-              placeholder={t("select-province") || "Select province"}
-              variant="bordered"
-            >
-              {provinces.map((province) => (
-                <SelectItem key={province}>
-                  {province}
-                </SelectItem>
-              ))}
-            </Select>
-
-            <Input
-              isRequired
-              label="Email"
-              placeholder={t("enter-email") || "Enter email address"}
-              type="email"
-              variant="bordered"
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                isRequired
-                label={t("password")}
-                placeholder={t("password-placeholder")}
-                type="password"
-                variant="bordered"
-                />
-                <Input
-                isRequired
-                label={t("confirm-password-label")}
-                placeholder={t("enter-password")}
-                type="password"
-                variant="bordered"
-                />
-            </div>
-
-            <Button className="w-full bg-[#f6c344] font-black text-[#651014] shadow-md mt-4" size="lg">
-              {t("register-submit")}
-            </Button>
+              <Button type="submit" className="w-full bg-[#f6c344] font-black text-[#651014] shadow-md mt-4" size="lg">
+                {t("register-submit")}
+              </Button>
+            </form>
           </CardBody>
           <CardFooter className="flex justify-center pt-0 border-t border-gray-100 mt-4">
             <p className="text-sm text-default-500 pt-4">

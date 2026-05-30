@@ -40,13 +40,32 @@ export const availableLanguages = [
   { code: "vi-VN", nativeName: "Tiếng Việt", isRTL: false, isDefault: true },
 ];
 
+const getSavedLanguage = () => {
+  if (typeof window === "undefined") return "vi-VN";
+  
+  // 1. Check cookies
+  const match = document.cookie.match(/(?:^|; )i18nextLng=([^;]*)/);
+  if (match) {
+    const value = decodeURIComponent(match[1]);
+    if (value === "vi-VN" || value === "en-US") return value;
+  }
+  
+  // 2. Check localStorage
+  const savedLocal = localStorage.getItem("i18nextLng") || localStorage.getItem("preferredLanguage");
+  if (savedLocal === "vi-VN" || savedLocal === "en-US") {
+    return savedLocal;
+  }
+  
+  return "vi-VN";
+};
+
 const fallbackLng = "vi-VN";
 
 i18n
   .use(i18nextHttpBackend)
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
-    lng: "vi-VN",
+    lng: getSavedLanguage(),
     fallbackLng: fallbackLng,
 
     ns: ["base"],
@@ -85,5 +104,13 @@ i18n
       },
     },
   });
+
+i18n.on("languageChanged", (lng) => {
+  if (typeof window !== "undefined") {
+    document.cookie = `i18nextLng=${lng}; path=/; max-age=31536000; SameSite=Lax`;
+    localStorage.setItem("i18nextLng", lng);
+    localStorage.setItem("preferredLanguage", lng);
+  }
+});
 
 export default i18n;

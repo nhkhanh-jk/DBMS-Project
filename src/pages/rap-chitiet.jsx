@@ -5,6 +5,7 @@ import { Image } from "@heroui/image";
 import { Chip } from "@heroui/chip";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { translateCinemaAddress, translateFormat } from "@/utils/localize";
 
 const movieDataByDate = {
   "23": [
@@ -70,7 +71,7 @@ const VIP_SURCHARGE = 20000;
 const SWEETBOX_SURCHARGE = 40000;
 
 export default function RapChiTietPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedDay, setSelectedDay] = useState("23");
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingStep, setBookingStep] = useState("seats");
@@ -242,7 +243,7 @@ export default function RapChiTietPage() {
             {/* Dark overlay at bottom */}
             <div className="absolute bottom-0 w-full bg-black/60 backdrop-blur-sm text-white p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center z-10">
               <div className="text-[13px] leading-6 mb-4 md:mb-0">
-                <p><span className="font-bold">{t("address")}:</span> Tầng 4, TTTM Vincom Đà Nẵng, đường Ngô Quyền, P.An Hải Bắc, Q.Sơn Trà, TP. Đà Nẵng</p>
+                <p><span className="font-bold">{t("address")}:</span> {translateCinemaAddress("Tầng 4, TTTM Vincom Đà Nẵng, đường Ngô Quyền, P.An Hải Bắc, Q.Sơn Trà, TP. Đà Nẵng", i18n.language)}</p>
                 <p><span className="font-bold">Fax:</span> +84 4 6 275 5240</p>
                 <p><span className="font-bold">Hotline:</span> 1900 6017</p>
               </div>
@@ -325,7 +326,7 @@ export default function RapChiTietPage() {
                       {movie.formats.map((format, fIdx) => (
                         <div key={fIdx}>
                           <p className="font-bold text-[16px] mb-3 text-[#333] border-l-4 border-[#e71a0f] pl-3">
-                            {format.name}
+                            {translateFormat(format.name, i18n.language)}
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {format.times.map((time, tIdx) => (

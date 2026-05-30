@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import TNCLayout from "@/layouts/tnc";
 import { slugify } from "@/utils/slugify";
 import movies from "../data/movies";
+import { translateGenre, translateDuration } from "@/utils/localize";
 
 const RankingMedal = ({ rank }) => {
   if (rank <= 0 || rank > 3) return null;
@@ -37,7 +38,7 @@ const RankingMedal = ({ rank }) => {
 };
 
 export default function PhimPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState("now-showing");
 
   const filteredMovies = movies.filter(movie => movie.category === activeTab);
@@ -109,8 +110,8 @@ export default function PhimPage() {
                     </h3>
                     
                     <div className="mt-2 text-[14px] leading-[1.6] text-[#333]">
-                      <p><span className="font-bold">{t("genre")}:</span> {movie.genre}</p>
-                      <p><span className="font-bold">{t("duration") || "Duration"}:</span> {movie.duration}</p>
+                      <p><span className="font-bold">{t("genre")}:</span> {translateGenre(movie.genre, i18n.language)}</p>
+                      <p><span className="font-bold">{t("duration") || "Duration"}:</span> {translateDuration(movie.duration, i18n.language)}</p>
                       <p><span className="font-bold">{t("release-date")}:</span> {movie.releaseDate}</p>
                     </div>
                   </div>
