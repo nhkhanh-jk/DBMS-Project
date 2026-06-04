@@ -1,7 +1,9 @@
 const { Sequelize } = require('sequelize');
-const { databaseUrl, nodeEnv } = require('./env');
+const { nodeEnv } = require('./env');
 
-const sequelize = new Sequelize(databaseUrl, {
+require('dotenv').config()
+
+const sequelize = new Sequelize( process.env.DB_URL, {
   dialect: 'postgres',
   logging: nodeEnv === 'development' ? console.log : false,
   define: {
