@@ -5,9 +5,11 @@ const connectDB = async () => {
     await sequelize.authenticate();
     console.log('PostgreSQL connected via Sequelize');
     
-    // Sync database models (creates tables if they do not exist)
-    // using alter: true to update schema on change without deleting existing data
-    await sequelize.sync({ alter: true });
+    // Sync database models
+    // In development: alter: true auto-updates schema
+    // In production: sync() only (no destructive changes)
+    const isDev = process.env.NODE_ENV !== 'production';
+    await sequelize.sync({ alter: isDev });
     console.log('PostgreSQL models synchronized');
   } catch (error) {
     console.error('PostgreSQL connection/synchronization error:', error);

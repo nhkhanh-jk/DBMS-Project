@@ -51,19 +51,24 @@ router.get('/tickets', requireAuth, async (req, res, next) => {
 router.get('/', requireAuth, requireRole('ADMIN'), async (req, res, next) => {
   try {
     const { role, page = 1, limit = 20 } = req.query;
-    const query = {};
-    if (role) query.role = role.toUpperCase();
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const [users, total] = await Promise.all([
-      User.find(query).select('-password').skip(skip).limit(parseInt(limit)).sort({ createdAt: -1 }),
-      User.countDocuments(query),
-    ]);
+    const where = {};
+    if (role) where.role = role.toUpperCase();
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const offset = (pageNum - 1) * limitNum;
+    const { count: total, rows: users } = await User.findAndCountAll({
+      where,
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']],
+      limit: limitNum,
+      offset,
+    });
     res.json({
       users: users.map(u => authService._toProfileDTO(u)),
       total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil(total / parseInt(limit)),
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
     });
   } catch (error) {
     next(error);
@@ -74,16 +79,13 @@ router.get('/', requireAuth, requireRole('ADMIN'), async (req, res, next) => {
 router.put('/:id/status', requireAuth, requireRole('ADMIN'), async (req, res, next) => {
   try {
     const { isActive } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { isActive: Boolean(isActive) },
-      { new: true }
-    );
+    const user = await User.findByPk(req.params.id);
     if (!user) {
       const error = new Error('User not found');
       error.status = 404;
       throw error;
     }
+    await user.update({ isActive: Boolean(isActive) });
     res.json(authService._toProfileDTO(user));
   } catch (error) {
     next(error);
