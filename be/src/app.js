@@ -21,6 +21,7 @@ function createApp() {
   const serviceRequestRoutes = require('./routes/serviceRequests');
   const cinemaRoutes = require('./routes/cinemas');
   const userRoutes = require('./routes/users');
+  const mlRoutes = require('./routes/ml');
 
   // Mount routes
   app.use('/api/auth', authRoutes);
@@ -32,6 +33,7 @@ function createApp() {
   app.use('/api/reviews', reviewRoutes);
   app.use('/api/service-requests', serviceRequestRoutes);
   app.use('/api/cinemas', cinemaRoutes);
+  app.use('/api/ml', mlRoutes);
 
   // Health check endpoint
   app.get('/api/health', (req, res) => {
