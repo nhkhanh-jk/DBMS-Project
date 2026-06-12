@@ -3,11 +3,7 @@ const { connectDB } = require('./config/db');
 const env = require('./config/env');
 const { scheduleShowtimeUpdates } = require('./workers/showtimeScheduler');
 
-console.log('Environment variables:', {
-  port: env.port,
-  nodeEnv: env.nodeEnv,
-  databaseUrl: env.databaseUrl,
-});
+console.log(`Starting in ${env.nodeEnv} mode on port ${env.port}`);
 
 const startServer = async () => {
   try {
