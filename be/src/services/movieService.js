@@ -35,7 +35,8 @@ class MovieService {
       description,
       durationMin,
       releaseDate,
-      status
+      status,
+      posterUrl,
     } = normalized;
 
     // Validate required fields
@@ -92,6 +93,7 @@ class MovieService {
       durationMin,
       releaseDate: releaseDateObj,
       status: status || 'SCHEDULED',
+      posterUrl: posterUrl || null,
     };
 
     // Create movie
@@ -120,7 +122,8 @@ class MovieService {
       description,
       durationMin,
       releaseDate,
-      status
+      status,
+      posterUrl,
     } = normalized;
 
     // Prepare update document
@@ -169,6 +172,7 @@ class MovieService {
       }
       updateData.status = status;
     }
+    if (posterUrl !== undefined) updateData.posterUrl = posterUrl;
 
     // Check if there's anything to update
     if (Object.keys(updateData).length === 0) {
@@ -218,6 +222,7 @@ class MovieService {
       durationMin: m.durationMin,
       releaseDate: releaseDate,
       status: m.status,
+      posterUrl: m.posterUrl,
       // Vietnamese
       MaPhim: idStr,
       TenPhim: m.title,
@@ -226,6 +231,7 @@ class MovieService {
       ThoiLuong: m.durationMin,
       NgayPhatHanh: releaseDate,
       TrangThai: m.status,
+      AnhPoster: m.posterUrl,
     };
   }
 }

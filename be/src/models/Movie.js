@@ -31,6 +31,10 @@ const Movie = sequelize.define('Movie', {
   status: {
     type: DataTypes.STRING,
     defaultValue: 'SCHEDULED', // SCHEDULED, ACTIVE, SNEAK_SHOW
+  },
+  posterUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
   }
 }, {
   tableName: 'movies',

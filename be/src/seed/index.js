@@ -10,12 +10,43 @@ const Review = require('../models/Review');
 const ServiceRequest = require('../models/ServiceRequest');
 
 const seedUsers = require('./userFactory');
-const seedMovies = require('./movieSeed');
+const movieData = require('./movie_data.json');
 const seedCinemas = require('./cinemaSeed');
 const seedShowtimes = require('./showtimeSeed');
 const seedBookings = require('./bookingSeed');
 const seedReviews = require('./reviewSeed');
 const seedServiceRequests = require('./serviceRequestSeed');
+
+function buildMoviesFromJson() {
+  return movieData.map(movie => ({
+    id: movie.id,
+    title: movie.title,
+    genres: Array.isArray(movie.genres) ? movie.genres : [],
+    description: movie.description || '',
+    durationMin: movie.durationMin,
+    releaseDate: new Date(movie.releaseDate),
+    status: movie.status || 'SCHEDULED',
+    posterUrl: movie.posterUrl || null,
+    createdAt: movie.createdAt ? new Date(movie.createdAt) : undefined,
+    updatedAt: movie.updatedAt ? new Date(movie.updatedAt) : undefined,
+  }));
+}
+
+async function seedMoviesFromJson() {
+  return Movie.bulkCreate(buildMoviesFromJson(), {
+    updateOnDuplicate: [
+      'title',
+      'genres',
+      'description',
+      'durationMin',
+      'releaseDate',
+      'status',
+      'posterUrl',
+      'updatedAt',
+    ],
+    returning: true,
+  });
+}
 
 async function resetSeedData() {
   await Booking.destroy({ where: {} });
@@ -44,7 +75,7 @@ async function seed() {
   const customers = users.filter(user => user.role === 'KHACHHANG');
 
   console.log('Creating movies...');
-  const movies = await seedMovies();
+  const movies = await seedMoviesFromJson();
 
   console.log('Creating cinemas...');
   const cinemas = await seedCinemas();

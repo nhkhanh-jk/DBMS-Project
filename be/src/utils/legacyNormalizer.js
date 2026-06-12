@@ -1,6 +1,7 @@
 const MAPS = {
   movie: { TenPhim:'title', TheLoai:'genres', MoTa:'description',
-           ThoiLuong:'durationMin', NgayPhatHanh:'releaseDate', TrangThai:'status' },
+           ThoiLuong:'durationMin', NgayPhatHanh:'releaseDate', TrangThai:'status',
+           AnhPoster:'posterUrl' },
   showtime: { MaPhim:'movieId', MaPhong:'roomId', ThoiGianBatDau:'startTime',
               ThoiGianKetThuc:'endTime', TrangThai:'status' },
   booking: { MaSuat:'showtimeId', MaKH:'userId', MaUuDai:'promotionCode',
