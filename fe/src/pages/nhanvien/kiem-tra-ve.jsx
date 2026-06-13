@@ -5,12 +5,44 @@ import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Chip } from "@heroui/chip";
 import * as htmlToImage from "html-to-image";
+import axios from "axios";
 
-const VALID_TICKETS = {
-  "TNC-001234": { movie: "QUỶ NHẬP TRÀNG 2", seat: "C5", time: "19:00", date: "MON 23/03/2026", room: "Phòng 1", cinema: "TNC Vincom Đà Nẵng", status: "valid",   customer: "Lê Chí", total: "90.000đ", age: "T18", poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=400&q=80" },
-  "TNC-002345": { movie: "CÚ NHẢY KỲ DIỆU",  seat: "A3", time: "14:00", date: "SUN 15/03/2026", room: "Phòng 2", cinema: "TNC Vincom Đà Nẵng", status: "valid",   customer: "Phạm Thị Lan", total: "110.000đ", age: "13+", poster: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=400&q=80" },
-  "TNC-003456": { movie: "ĐÊM NGÀY XA MẸ",   seat: "E7", time: "16:45", date: "TUE 24/03/2026", room: "Phòng 1", cinema: "TNC Vincom Đà Nẵng", status: "used",    customer: "Ngô Minh Khoa", total: "85.000đ", age: "P", poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=400&q=80" },
-  "TNC-004567": { movie: "SIÊU TRỘM QUYẾT CHIẾN", seat: "B2", time: "21:30", date: "MON 23/03/2026", room: "Phòng 3", cinema: "TNC Vincom Đà Nẵng", status: "valid", customer: "Lý Thu Hà", total: "120.000đ", age: "T16", poster: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=400&q=80" },
+const formatTimeSafe = (isoString) => {
+  try {
+    if (!isoString) return "??:??";
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) {
+      if (typeof isoString === "string" && isoString.includes(":")) {
+        return isoString;
+      }
+      return "??:??";
+    }
+    return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return String(isoString || "??:??");
+  }
+};
+
+const formatDateSafe = (isoString) => {
+  try {
+    if (!isoString) return "";
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+  } catch {
+    return "";
+  }
+};
+
+const formatDateTimeSafe = (isoString) => {
+  try {
+    if (!isoString) return "—";
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return String(isoString);
+    return d.toLocaleString("vi-VN");
+  } catch {
+    return String(isoString || "—");
+  }
 };
 
 const STATUS_STYLE = {
@@ -19,45 +51,64 @@ const STATUS_STYLE = {
   invalid:  { label: "Không Hợp Lệ", icon: "X", cls: "border-red-500/50 bg-red-500/10 shadow-[0_0_20px_rgba(239,68,68,0.15)]", text: "text-red-400" },
 };
 
-const RECENT_SCANS = [
-  { code: "TNC-001234", result: "valid",   time: "13:45" },
-  { code: "TNC-003456", result: "used",    time: "13:32" },
-  { code: "TNC-009999", result: "invalid", time: "13:21" },
-];
-
 export default function KiemTraVe() {
-  const [input, setInput] = useState("");
-  const [result, setResult] = useState(null);
-  const [history, setHistory] = useState(RECENT_SCANS);
+  const [input, setInput]     = useState("");
+  const [result, setResult]   = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState([]);
   const ticketRef = useRef(null);
+
+  const API = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+  const token = localStorage.getItem("tnc_token");
+
+  const handleCheck = async () => {
+    const code = input.trim().toUpperCase();
+    if (!code) return;
+    setLoading(true);
+    try {
+      const { data } = await axios.get(`${API}/bookings/verify/${code}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setResult(data);
+
+      // Nếu vé hợp lệ → tự động đánh dấu đã dùng
+      if (data.status === "valid") {
+        await axios.put(`${API}/bookings/verify/${code}/use`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setResult(prev => ({ ...prev, status: "used" }));
+      }
+
+      setHistory(prev => [{
+        code,
+        result: data.status === "valid" ? "used" : data.status,
+        time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+      }, ...prev.slice(0, 9)]);
+    } catch (err) {
+      const status = err.response?.status === 404 ? "invalid" : "invalid";
+      setResult({ code, status });
+      setHistory(prev => [{
+        code, result: "invalid",
+        time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+      }, ...prev.slice(0, 9)]);
+    } finally {
+      setLoading(false);
+      setInput("");
+    }
+  };
 
   const handlePrint = async () => {
     if (ticketRef.current) {
       try {
         const dataUrl = await htmlToImage.toPng(ticketRef.current, { backgroundColor: '#fcfbf7' });
         const link = document.createElement("a");
-        link.download = `Hoadon-${result?.code || "TNC"}-${Date.now()}.png`;
+        link.download = `Ve-${result?.code || "TNC"}-${Date.now()}.png`;
         link.href = dataUrl;
         link.click();
       } catch (err) {
-        console.error("Oops, something went wrong!", err);
+        console.error(err);
       }
     }
-  };
-
-  const handleCheck = () => {
-    const code = input.trim().toUpperCase();
-    if (!code) return;
-    const ticket = VALID_TICKETS[code];
-    const res = ticket
-      ? { code, ...ticket }
-      : { code, status: "invalid" };
-    setResult(res);
-    setHistory((prev) => [{ code, result: res.status, time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }) }, ...prev.slice(0, 9)]);
-    if (ticket?.status === "valid") {
-      VALID_TICKETS[code] = { ...ticket, status: "used" };
-    }
-    setInput("");
   };
 
   return (
@@ -74,11 +125,12 @@ export default function KiemTraVe() {
             <div className="flex gap-4">
               <Input
                 type="text"
-                placeholder="VD: TNC-001234"
+                placeholder="VD: BK-ABC123XY"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleCheck()}
                 size="lg"
+                disabled={loading}
                 classNames={{
                   inputWrapper: "bg-[#0f172a] border border-white/10 focus-within:!border-[#e71a0f] hover:border-white/20 transition-colors shadow-inner",
                   input: "font-mono font-bold text-lg uppercase",
@@ -87,12 +139,13 @@ export default function KiemTraVe() {
               <Button
                 onClick={handleCheck}
                 size="lg"
+                isLoading={loading}
                 className="bg-[#e71a0f] text-white font-black px-10 shadow-[0_4px_15px_rgba(231,26,15,0.4)] hover:shadow-[0_4px_20px_rgba(231,26,15,0.6)]"
               >
                 Kiểm Tra
               </Button>
             </div>
-            <p className="text-xs text-white/40 mt-3 font-medium">Test data demo: TNC-001234, TNC-003456</p>
+            <p className="text-xs text-white/40 mt-3 font-medium">Nhập mã đặt vé dạng BK-XXXXXXXX (từ hệ thống)</p>
           </CardBody>
         </Card>
 
@@ -107,7 +160,7 @@ export default function KiemTraVe() {
                     
                     <div className="w-full md:w-32 h-48 md:h-auto bg-[#eee] flex-shrink-0">
                         <img 
-                            src={result.poster} 
+                            src={result.posterUrl || "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=400&q=80"} 
                             alt={result.movie} 
                             className="w-full h-full object-cover" 
                         />
@@ -128,20 +181,35 @@ export default function KiemTraVe() {
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
                             <div>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase">RẠP</p>
-                                <p className="text-[12px] font-bold text-[#444]">{result.cinema}</p>
+                                <p className="text-[12px] font-bold text-[#444]">{result.cinema} {result.city ? `• ${result.city}` : ""}</p>
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase">SUẤT CHIẾU</p>
-                                <p className="text-[12px] font-bold text-[#444]">{result.time} | {result.date}</p>
+                                <p className="text-[12px] font-bold text-[#444]">
+                                  {formatTimeSafe(result.startTime)}
+                                  {" | "}
+                                  {formatDateSafe(result.startTime)}
+                                </p>
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase">PHÒNG & GHẾ</p>
-                                <p className="text-[12px] font-bold text-[#444]">{result.room} | <span className="text-[#b11116]">{result.seat}</span></p>
+                                <p className="text-[12px] font-bold text-[#444]">Phòng {result.roomId} | <span className="text-[#b11116]">{result.seats}</span></p>
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase">KHÁCH HÀNG</p>
                                 <p className="text-[12px] font-black text-[#333]">{result.customer}</p>
+                                {result.customerPhone && <p className="text-[11px] text-gray-400">{result.customerPhone}</p>}
                             </div>
+                        </div>
+                        {result.combos?.length > 0 && (
+                          <div className="pt-2">
+                            <p className="text-[10px] font-bold text-gray-400 uppercase">COMBO</p>
+                            <p className="text-[12px] font-bold text-[#444]">{result.combos.join(", ")}</p>
+                          </div>
+                        )}
+                        <div className="pt-2 border-t border-gray-200">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase">TỔNG TIỀN</p>
+                          <p className="text-sm font-black text-[#b11116]">{result.totalPrice?.toLocaleString("vi-VN")} đ</p>
                         </div>
                     </div>
 

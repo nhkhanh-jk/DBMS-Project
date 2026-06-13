@@ -132,13 +132,32 @@ export default function PhimChiTietPage() {
     setBookingError("");
     try {
       const ticketPrice = selectedShowtime?.basePrice || 100000;
-      const tickets = selectedSeats.map(seatNumber => ({
+      // Ghế ngồi
+      const seatTickets = selectedSeats.map(seatNumber => ({
         seatNumber,
         price: ticketPrice,
+        type: "seat",
       }));
+
+      // Combo bắp/nước — thêm vào tickets dưới dạng item riêng
+      const comboTickets = Object.entries(selectedCombos).flatMap(([id, qty]) => {
+        if (!qty || qty <= 0) return [];
+        const combo = combosList.find(c => c.id === id);
+        if (!combo) return [];
+        // Mỗi combo 1 đơn vị = 1 ticket riêng
+        return Array.from({ length: qty }, () => ({
+          seatNumber: `COMBO-${combo.name}`,
+          price: combo.price,
+          type: "combo",
+          comboName: combo.name,
+        }));
+      });
+
+      const allTickets = [...seatTickets, ...comboTickets];
+
       const result = await bookingsApi.createBooking({
         showtimeId: selectedShowtime.id,
-        tickets,
+        tickets: allTickets,
         paymentMethod,
       });
       setBookingSuccess(result);

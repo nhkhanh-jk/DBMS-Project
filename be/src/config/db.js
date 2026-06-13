@@ -6,10 +6,9 @@ const connectDB = async () => {
     console.log('PostgreSQL connected via Sequelize');
     
     // Sync database models
-    // In development: alter: true auto-updates schema
-    // In production: sync() only (no destructive changes)
-    const isDev = process.env.NODE_ENV !== 'production';
-    await sequelize.sync({ alter: isDev });
+    // alter: false — chỉ tạo bảng nếu chưa có, KHÔNG ALTER bảng đã tồn tại
+    // Dùng alter: true khi thay đổi schema model (thêm/sửa cột), sau đó tắt lại
+    await sequelize.sync({ alter: false });
     console.log('PostgreSQL models synchronized');
   } catch (error) {
     console.error('PostgreSQL connection/synchronization error:', error);
