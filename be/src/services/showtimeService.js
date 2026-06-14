@@ -39,16 +39,26 @@ class ShowtimeService {
     });
 
     // Convert to DTOs
-    const dtoList = [];
-    for (const showtime of showtimes) {
-      const movie = await Movie.findByPk(showtime.movieId);
-      const cinema = await Cinema.findByPk(showtime.cinemaId);
+    if (showtimes.length === 0) return [];
+
+    const movieIds = [...new Set(showtimes.map(s => s.movieId).filter(Boolean))];
+    const cinemaIds = [...new Set(showtimes.map(s => s.cinemaId).filter(Boolean))];
+
+    const [movies, cinemas] = await Promise.all([
+      Movie.findAll({ where: { id: movieIds } }),
+      Cinema.findAll({ where: { id: cinemaIds } })
+    ]);
+
+    const movieMap = new Map(movies.map(m => [m.id, m]));
+    const cinemaMap = new Map(cinemas.map(c => [c.id, c]));
+
+    return showtimes.map(showtime => {
+      const movie = movieMap.get(showtime.movieId);
+      const cinema = cinemaMap.get(showtime.cinemaId);
       const movieTitle = movie ? movie.title : null;
       const roomName = cinema ? `${cinema.name} - Room ${showtime.roomId}` : null;
-      dtoList.push(this._toShowtimeDTO(showtime, movieTitle, roomName));
-    }
-
-    return dtoList;
+      return this._toShowtimeDTO(showtime, movieTitle, roomName);
+    });
   }
 
   async getShowtimeById(showtimeId) {

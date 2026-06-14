@@ -1,35 +1,222 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import AdminLayout from "@/layouts/staff";
-import movies from "@/data/movies";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import * as htmlToImage from "html-to-image";
+import { moviesApi } from "@/services/moviesApi";
+import { showtimesApi } from "@/services/showtimesApi";
+import { bookingsApi } from "@/services/bookingsApi";
 
-const SHOWTIMES = ["10:00", "12:30", "14:00", "16:45", "19:00", "21:30"];
-
-const ROWS = ["A", "B", "C", "D", "E", "F", "G", "H"];
+const ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
 const COLS = 10;
-const SOLD_SEATS = ["A3", "A4", "B5", "C7", "D2", "D3", "E8"];
-
-const TICKET_PRICE = 90000;
+const FALLBACK_IMG = "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=800&q=80";
 
 const STEPS = ["Chọn phim & suất", "Chọn ghế", "Xác nhận & in vé"];
 
+const formatTimeSafe = (isoString) => {
+  try {
+    if (!isoString) return "??:??";
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) {
+      if (typeof isoString === "string" && isoString.includes(":")) {
+        return isoString;
+      }
+      return "??:??";
+    }
+    return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return String(isoString || "??:??");
+  }
+};
+
+const formatDateSafe = (isoString) => {
+  try {
+    if (!isoString) return "";
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+  } catch {
+    return "";
+  }
+};
+
+const formatDateTimeSafe = (isoString) => {
+  try {
+    if (!isoString) return "—";
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return String(isoString);
+    return d.toLocaleString("vi-VN");
+  } catch {
+    return String(isoString || "—");
+  }
+};
+
 export default function BanVe() {
   const [step, setStep] = useState(0);
+  const [movies, setMovies] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
-  const [selectedTime, setSelectedTime] = useState(null);
+  const [showtimes, setShowtimes] = useState([]);
+  const [selectedShowtime, setSelectedShowtime] = useState(null);
+  const [seats, setSeats] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [printed, setPrinted] = useState(false);
+  const [movieSearch, setMovieSearch] = useState("");
+  
+  // Loading & error states
+  const [loadingMovies, setLoadingMovies] = useState(false);
+  const [loadingShowtimes, setLoadingShowtimes] = useState(false);
+  const [loadingSeats, setLoadingSeats] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingError, setBookingError] = useState("");
+  const [bookingResult, setBookingResult] = useState(null);
 
-  const nowShowing = movies.filter((m) => m.category === "now-showing");
   const receiptRef = useRef(null);
+  const showtimeSectionRef = useRef(null);
 
-  const toggleSeat = (seat) => {
-    if (SOLD_SEATS.includes(seat)) return;
+  // 1. Fetch movies on mount
+  useEffect(() => {
+    const fetchMovies = async () => {
+      setLoadingMovies(true);
+      console.log("[POS] Fetching movies...");
+      try {
+        const data = await moviesApi.getMovies();
+        console.log("[POS] Raw movies data:", data);
+        
+        // Filter for movies that are active/released/sneak show
+        const activeMovies = Array.isArray(data) 
+          ? data.filter(m => ["ACTIVE", "RELEASED", "SNEAK_SHOW"].includes(m.status || m.TrangThai))
+          : [];
+        console.log("[POS] Filtered active movies:", activeMovies);
+        
+        setMovies(activeMovies.length > 0 ? activeMovies : (Array.isArray(data) ? data : []));
+      } catch (err) {
+        console.error("[POS] Failed to fetch movies:", err);
+      } finally {
+        setLoadingMovies(false);
+      }
+    };
+    fetchMovies();
+  }, []);
+
+  // 2. Fetch showtimes when movie changes
+  useEffect(() => {
+    const fetchShowtimes = async () => {
+      if (!selectedMovie) {
+        setShowtimes([]);
+        setSelectedShowtime(null);
+        return;
+      }
+      setLoadingShowtimes(true);
+      const movieId = selectedMovie.id || selectedMovie.MaPhim;
+      console.log(`[POS] Fetching showtimes for movie: ${selectedMovie.title || selectedMovie.TenPhim} (ID: ${movieId})...`);
+      try {
+        const data = await showtimesApi.getShowtimes({ movieId });
+        console.log("[POS] Raw showtimes response:", data);
+        
+        // Chỉ hiển thị suất ACTIVE hoặc SCHEDULED, và chưa kết thúc
+        const now = new Date();
+        const validShowtimes = Array.isArray(data) ? data.filter(st => {
+          const status = st.status || st.TrangThai;
+          if (status === 'COMPLETED' || status === 'CANCELLED') return false;
+          // Nếu có endTime thì kiểm tra chưa hết giờ
+          const endTime = st.endTime || st.ThoiGianKetThuc;
+          if (endTime && new Date(endTime) < now) return false;
+          return true;
+        }) : [];
+        console.log("[POS] Valid showtimes (upcoming):", validShowtimes.length, "/", (Array.isArray(data) ? data.length : 0));
+        
+        setShowtimes(validShowtimes);
+        setSelectedShowtime(null);
+      } catch (err) {
+        console.error("[POS] Failed to fetch showtimes:", err);
+      } finally {
+        setLoadingShowtimes(false);
+      }
+    };
+    fetchShowtimes();
+  }, [selectedMovie]);
+
+  // 3. Fetch seats when showtime changes
+  useEffect(() => {
+    const fetchSeats = async () => {
+      if (!selectedShowtime) {
+        setSeats([]);
+        setSelectedSeats([]);
+        return;
+      }
+      setLoadingSeats(true);
+      const showtimeId = selectedShowtime.id || selectedShowtime.MaSuat;
+      console.log(`[POS] Fetching seats for showtime: ${showtimeId}...`);
+      try {
+        const data = await showtimesApi.getShowtimeSeats(showtimeId);
+        console.log("[POS] Raw seats response:", data);
+        setSeats(Array.isArray(data) ? data : []);
+        setSelectedSeats([]);
+      } catch (err) {
+        console.error("[POS] Failed to fetch seats:", err);
+      } finally {
+        setLoadingSeats(false);
+      }
+    };
+    fetchSeats();
+  }, [selectedShowtime]);
+
+  const handleMovieSelect = (movie) => {
+    console.log("[POS] User clicked movie:", movie);
+    setSelectedMovie(movie);
+    // Cuộn xuống phần chọn suất chiếu sau khi React re-render
+    setTimeout(() => {
+      showtimeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  };
+
+  const toggleSeat = (seatNumber) => {
+    const seatData = seats.find(s => (s.seatNumber === seatNumber || s.MaGhe === seatNumber));
+    if (seatData?.status === "BOOKED" || seatData?.TrangThai === "ĐÃ BÁN") return;
+
     setSelectedSeats((prev) =>
-      prev.includes(seat) ? prev.filter((s) => s !== seat) : [...prev, seat]
+      prev.includes(seatNumber) 
+        ? prev.filter((s) => s !== seatNumber) 
+        : [...prev, seatNumber]
     );
+  };
+
+  const getTicketPrice = () => {
+    return selectedShowtime?.basePrice || selectedShowtime?.GiaVe || 100000;
+  };
+
+  const handleCheckout = async () => {
+    if (selectedSeats.length === 0) return;
+    setBookingLoading(true);
+    setBookingError("");
+    
+    const showtimeId = selectedShowtime.id || selectedShowtime.MaSuat;
+    console.log("[POS] Proceeding to checkout for showtime:", showtimeId);
+    
+    try {
+      const ticketPrice = getTicketPrice();
+      const ticketsPayload = selectedSeats.map(seatNumber => ({
+        seatNumber,
+        price: ticketPrice,
+        type: "seat",
+      }));
+
+      const data = await bookingsApi.createBooking({
+        showtimeId,
+        tickets: ticketsPayload,
+        paymentMethod: "cash",
+      });
+
+      console.log("[POS] Booking response:", data);
+      setBookingResult(data);
+      setStep(2);
+    } catch (err) {
+      console.error("[POS] Checkout failed:", err);
+      const msg = err.response?.data?.error || "Đặt vé thất bại. Vui lòng kiểm tra lại ghế hoặc thử lại.";
+      setBookingError(msg);
+    } finally {
+      setBookingLoading(false);
+    }
   };
 
   const handlePrint = async () => {
@@ -37,19 +224,25 @@ export default function BanVe() {
       try {
         const dataUrl = await htmlToImage.toPng(receiptRef.current, { backgroundColor: '#1e293b' });
         const link = document.createElement("a");
-        link.download = `Hoadon-TNC-${Date.now()}.png`;
+        const code = bookingResult?.bookingCode || bookingResult?.MaGiaoDich || "TNC";
+        link.download = `Hoadon-${code}-${Date.now()}.png`;
         link.href = dataUrl;
         link.click();
       } catch (err) {
-        console.error("Oops, something went wrong!", err);
+        console.error("Oops, something went wrong printing receipt!", err);
       }
     }
     setPrinted(true);
   };
 
   const reset = () => {
-    setStep(0); setSelectedMovie(null); setSelectedTime(null);
-    setSelectedSeats([]); setPrinted(false);
+    setStep(0); 
+    setSelectedMovie(null); 
+    setSelectedShowtime(null);
+    setSelectedSeats([]); 
+    setPrinted(false);
+    setBookingResult(null);
+    setBookingError("");
   };
 
   return (
@@ -70,59 +263,122 @@ export default function BanVe() {
           ))}
         </div>
 
+        {bookingError && (
+          <div className="p-4 bg-red-950/50 border border-red-500/30 text-red-200 rounded-xl text-sm font-bold">
+            ⚠️ {bookingError}
+          </div>
+        )}
+
         {/* Step 0: Chọn phim & suất */}
         {step === 0 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <Card className="bg-[#1e293b]/80 backdrop-blur-md border border-white/10 shadow-lg">
               <CardHeader className="px-6 py-4 border-b border-white/5">
-                <h3 className="text-sm font-black text-white/80 uppercase">Chọn phim</h3>
+                <h3 className="text-sm font-black text-white/80 uppercase">Chọn phim đang chiếu</h3>
               </CardHeader>
               <CardBody className="px-6 py-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {nowShowing.map((m, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedMovie(m)}
-                      className={`flex items-center gap-4 p-3 rounded-xl border-2 text-left transition-all relative overflow-hidden group ${
-                        selectedMovie?.title === m.title
-                          ? "border-[#e71a0f] bg-[#e71a0f]/20 shadow-[0_0_15px_rgba(231,26,15,0.2)]"
-                          : "border-white/5 hover:border-white/30 bg-white/5"
-                      }`}
-                    >
-                      {selectedMovie?.title === m.title && <div className="absolute inset-0 bg-gradient-to-r from-[#e71a0f]/20 to-transparent pointer-events-none"></div>}
-                      <img src={m.image} alt={m.title} className="w-12 h-16 object-cover rounded shadow-md group-hover:scale-105 transition-transform" />
-                      <div className="relative z-10 w-full">
-                        <p className="text-sm font-black text-white truncate">{m.title}</p>
-                        <p className="text-[10px] text-white/50 mt-1 uppercase font-bold tracking-widest">{m.duration}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                {/* Thanh tìm kiếm phim */}
+                {!loadingMovies && movies.length > 0 && (
+                  <div className="mb-4 relative">
+                    <input
+                      type="text"
+                      value={movieSearch}
+                      onChange={(e) => setMovieSearch(e.target.value)}
+                      placeholder="🔍 Tìm kiếm tên phim..."
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#e71a0f]/50 transition-colors"
+                    />
+                    {movieSearch && (
+                      <button
+                        onClick={() => setMovieSearch("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 text-lg"
+                      >×</button>
+                    )}
+                  </div>
+                )}
+                {loadingMovies ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="w-8 h-8 border-4 border-[#e71a0f] border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : movies.length === 0 ? (
+                  <p className="text-center text-white/50 py-8">Không có phim nào đang chiếu.</p>
+                ) : (
+                  <div className="max-h-[460px] overflow-y-auto pr-1 space-y-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {movies
+                      .filter(m => {
+                        const name = (m.title || m.TenPhim || "").toLowerCase();
+                        return !movieSearch || name.includes(movieSearch.toLowerCase());
+                      })
+                      .slice(0, 60)
+                      .map((m, i) => {
+                      const mId = m.id || m.MaPhim;
+                      const isSelected = selectedMovie?.id === mId || selectedMovie?.MaPhim === mId;
+                      
+                      return (
+                        <button
+                          key={mId || i}
+                          onClick={() => handleMovieSelect(m)}
+                          className={`flex items-center gap-4 p-3 rounded-xl border-2 text-left transition-all relative overflow-hidden group ${
+                            isSelected
+                              ? "border-[#e71a0f] bg-[#e71a0f]/20 shadow-[0_0_15px_rgba(231,26,15,0.2)]"
+                              : "border-white/5 hover:border-white/30 bg-white/5"
+                          }`}
+                        >
+                          {isSelected && <div className="absolute inset-0 bg-gradient-to-r from-[#e71a0f]/20 to-transparent pointer-events-none"></div>}
+                          <img src={m.posterUrl || m.AnhPhim || FALLBACK_IMG} alt={m.title || m.TenPhim} className="w-12 h-16 object-cover rounded shadow-md group-hover:scale-105 transition-transform" />
+                          <div className="relative z-10 w-full">
+                            <p className="text-sm font-black text-white truncate">{m.title || m.TenPhim}</p>
+                            <p className="text-[10px] text-white/50 mt-1 uppercase font-bold tracking-widest">{m.durationMin || m.ThoiLuong || "?"} phút</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  </div>
+                )}
               </CardBody>
             </Card>
 
             {selectedMovie && (
-              <Card className="bg-[#1e293b]/80 backdrop-blur-md border border-white/10 shadow-lg animate-in slide-in-from-top-4 duration-300">
+              <Card ref={showtimeSectionRef} className="bg-[#1e293b]/80 backdrop-blur-md border border-white/10 shadow-lg animate-in slide-in-from-top-4 duration-300">
                 <CardHeader className="px-6 py-4 border-b border-white/5">
                   <h3 className="text-sm font-black text-white/80 uppercase">Chọn suất chiếu</h3>
                 </CardHeader>
                 <CardBody className="px-6 py-4">
-                  <div className="flex flex-wrap gap-3">
-                    {SHOWTIMES.map((t) => (
-                      <Button
-                        key={t}
-                        onClick={() => setSelectedTime(t)}
-                        size="md"
-                        className={`font-black ${
-                          selectedTime === t
-                            ? "bg-[#e71a0f] text-white shadow-[0_4px_10px_rgba(231,26,15,0.4)]"
-                            : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
-                        }`}
-                      >
-                        {t}
-                      </Button>
-                    ))}
-                  </div>
+                  {loadingShowtimes ? (
+                    <div className="flex justify-center items-center py-4">
+                      <div className="w-6 h-6 border-4 border-[#e71a0f] border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : showtimes.length === 0 ? (
+                    <p className="text-sm text-white/50 italic">Không có suất chiếu sắp tới hợp lệ cho phim này.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-3">
+                      {showtimes.map((st) => {
+                        const stId = st.id || st.MaSuat;
+                        const isStSelected = selectedShowtime?.id === stId || selectedShowtime?.MaSuat === stId;
+                        const startTimeVal = st.startTime || st.ThoiGianBatDau;
+                        const roomNameVal = st.roomName || st.TenPhong || `P.${st.roomId || st.MaPhong}`;
+                        const formattedTime = formatTimeSafe(startTimeVal);
+                        const formattedDate = formatDateSafe(startTimeVal);
+
+                        return (
+                          <Button
+                            key={stId}
+                            onClick={() => setSelectedShowtime(st)}
+                            size="md"
+                            className={`font-black ${
+                              isStSelected
+                                ? "bg-[#e71a0f] text-white shadow-[0_4px_10px_rgba(231,26,15,0.4)]"
+                                : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
+                            }`}
+                          >
+                            {formattedTime} {formattedDate && <span className="text-[10px] opacity-75 font-normal ml-1">({formattedDate})</span>}
+                            <span className="text-[10px] opacity-75 ml-1">({roomNameVal})</span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardBody>
               </Card>
             )}
@@ -130,7 +386,7 @@ export default function BanVe() {
             <Button
               size="lg"
               fullWidth
-              disabled={!selectedMovie || !selectedTime}
+              disabled={!selectedMovie || !selectedShowtime}
               onClick={() => setStep(1)}
               className="bg-[#e71a0f] text-white font-black disabled:opacity-30 shadow-[0_4px_10px_rgba(231,26,15,0.3)] hover:shadow-[0_4px_15px_rgba(231,26,15,0.5)]"
             >
@@ -145,8 +401,10 @@ export default function BanVe() {
             <Card className="bg-[#1e293b]/80 backdrop-blur-md border border-white/10 shadow-lg">
               <CardBody className="p-8">
                 <div className="text-center mb-8">
-                  <p className="text-xl font-black text-white tracking-widest uppercase">{selectedMovie?.title}</p>
-                  <p className="text-sm font-bold text-[#e71a0f] mt-1">{selectedTime}</p>
+                  <p className="text-xl font-black text-white tracking-widest uppercase">{selectedMovie?.title || selectedMovie?.TenPhim}</p>
+                  <p className="text-sm font-bold text-[#e71a0f] mt-1">
+                    {formatDateTimeSafe(selectedShowtime?.startTime || selectedShowtime?.ThoiGianBatDau)} ({selectedShowtime?.roomName || selectedShowtime?.TenPhong || `P.${selectedShowtime?.roomId || selectedShowtime?.MaPhong}`})
+                  </p>
                 </div>
                 
                 <div className="flex justify-center gap-6 text-xs text-white/50 mb-8 font-bold uppercase tracking-widest">
@@ -162,32 +420,40 @@ export default function BanVe() {
                   </div>
                 </div>
 
-                <div className="space-y-1.5 overflow-x-auto">
-                  {ROWS.map((row) => (
-                    <div key={row} className="flex items-center gap-1.5 justify-center">
-                      <span className="text-xs text-white/30 w-4 text-right">{row}</span>
-                      {Array.from({ length: COLS }, (_, c) => {
-                        const seat = `${row}${c + 1}`;
-                        const isSold = SOLD_SEATS.includes(seat);
-                        const isSelected = selectedSeats.includes(seat);
-                        return (
-                          <button
-                            key={seat}
-                            onClick={() => toggleSeat(seat)}
-                            disabled={isSold}
-                            className={`w-8 h-8 rounded text-xs font-black transition-all flex-shrink-0 flex items-center justify-center border-2 hover:scale-110 ${
-                              isSold ? "bg-white/10 border-transparent text-white/30 cursor-not-allowed" :
-                              isSelected ? "bg-[#e71a0f] border-[#e71a0f] text-white shadow-[0_0_10px_rgba(231,26,15,0.5)]" :
-                              "bg-transparent border-green-500 text-green-500 hover:bg-green-500/20"
-                            }`}
-                          >
-                            {isSold ? "X" : c + 1}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
+                {loadingSeats ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="w-10 h-10 border-4 border-[#e71a0f] border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 overflow-x-auto">
+                    {ROWS.map((row) => (
+                      <div key={row} className="flex items-center gap-1.5 justify-center">
+                        <span className="text-xs text-white/30 w-4 text-right">{row}</span>
+                        {Array.from({ length: COLS }, (_, c) => {
+                          const seatNumber = `${row}${c + 1}`;
+                          const seatData = seats.find(s => (s.seatNumber === seatNumber || s.MaGhe === seatNumber));
+                          const isSold = seatData ? (seatData.status === "BOOKED" || seatData.TrangThai === "ĐÃ BÁN") : false;
+                          const isSelected = selectedSeats.includes(seatNumber);
+                          
+                          return (
+                            <button
+                              key={seatNumber}
+                              onClick={() => toggleSeat(seatNumber)}
+                              disabled={isSold}
+                              className={`w-8 h-8 rounded text-xs font-black transition-all flex-shrink-0 flex items-center justify-center border-2 hover:scale-110 ${
+                                isSold ? "bg-white/10 border-transparent text-white/30 cursor-not-allowed" :
+                                isSelected ? "bg-[#e71a0f] border-[#e71a0f] text-white shadow-[0_0_10px_rgba(231,26,15,0.5)]" :
+                                "bg-transparent border-green-500 text-green-500 hover:bg-green-500/20"
+                              }`}
+                            >
+                              {isSold ? "X" : c + 1}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardBody>
             </Card>
 
@@ -195,17 +461,17 @@ export default function BanVe() {
               <CardBody className="p-5 flex flex-row items-center justify-between">
                 <div>
                   <p className="text-sm text-white/60 mb-1">Ghế đang chọn: <span className="font-bold text-white text-lg ml-2">{selectedSeats.join(", ") || "—"}</span></p>
-                  <p className="text-sm text-white/60">Tổng thanh toán: <span className="font-black text-[#f6c344] text-xl ml-2">{(selectedSeats.length * TICKET_PRICE).toLocaleString("vi-VN")} đ</span></p>
+                  <p className="text-sm text-white/60">Tổng thanh toán: <span className="font-black text-[#f6c344] text-xl ml-2">{(selectedSeats.length * getTicketPrice()).toLocaleString("vi-VN")} đ</span></p>
                 </div>
                 <div className="flex gap-3">
                   <Button size="lg" onClick={() => setStep(0)} variant="flat" className="bg-white/10 text-white font-bold px-8">← Thông Tin</Button>
                   <Button
                     size="lg"
-                    disabled={selectedSeats.length === 0}
-                    onClick={() => setStep(2)}
+                    disabled={selectedSeats.length === 0 || bookingLoading}
+                    onClick={handleCheckout}
                     className="bg-[#e71a0f] text-white font-black px-10 shadow-[0_4px_10px_rgba(231,26,15,0.4)] disabled:opacity-50"
                   >
-                    Thanh Toán
+                    {bookingLoading ? "Đang xử lý..." : "Thanh Toán"}
                   </Button>
                 </div>
               </CardBody>
@@ -224,24 +490,25 @@ export default function BanVe() {
                       <div className="w-16 h-16 bg-[#e71a0f]/20 text-[#e71a0f] rounded-full flex items-center justify-center mx-auto mb-3 shadow-[0_0_15px_rgba(231,26,15,0.3)]">
                         <span className="text-2xl font-black">TNC</span>
                       </div>
-                      <h3 className="text-2xl font-black text-white">XÁC NHẬN HÓA ĐƠN</h3>
+                      <h3 className="text-2xl font-black text-white">HÓA ĐƠN ĐÃ THANH TOÁN</h3>
                     </div>
                   
-                  <div className="space-y-3 text-sm p-4 bg-black/30 rounded-xl border border-white/5">
-                    {[
-                      ["Phim",         selectedMovie?.title],
-                      ["Suất chiếu",   selectedTime],
-                      ["Phòng chiếu",  "TNC Vincom Đà Nẵng · Phòng 1"],
-                      ["Vị trí ghế",   selectedSeats.join(", ")],
-                      ["Số lượng vé",  `${selectedSeats.length} vé`],
-                      ["TỔNG THU",    `${(selectedSeats.length * TICKET_PRICE).toLocaleString("vi-VN")} đ`],
-                    ].map(([k, v], i) => (
-                      <div key={k} className={`flex justify-between py-2 ${i === 5 ? "border-t border-white/20 mt-2 pt-4" : "border-b border-white/5"}`}>
-                        <span className={`text-white/60 ${i===5?"uppercase font-bold tracking-widest":""}`}>{k}</span>
-                        <span className={`font-black ${i===5?"text-2xl text-[#f6c344]":"text-white"}`}>{v}</span>
-                      </div>
-                    ))}
-                  </div>
+                    <div className="space-y-3 text-sm p-4 bg-black/30 rounded-xl border border-white/5">
+                      {[
+                        ["Mã giao dịch", bookingResult?.bookingCode || bookingResult?.MaGiaoDich || "—"],
+                        ["Phim",         selectedMovie?.title || selectedMovie?.TenPhim],
+                        ["Suất chiếu",   selectedShowtime ? formatDateTimeSafe(selectedShowtime.startTime || selectedShowtime.ThoiGianBatDau) : ""],
+                        ["Phòng chiếu",  selectedShowtime?.roomName || selectedShowtime?.TenPhong || `Phòng ${selectedShowtime?.roomId || selectedShowtime?.MaPhong}`],
+                        ["Vị trí ghế",   selectedSeats.join(", ")],
+                        ["Số lượng vé",  `${selectedSeats.length} vé`],
+                        ["TỔNG THU",    `${(bookingResult?.totalPrice || bookingResult?.TongTien || (selectedSeats.length * getTicketPrice())).toLocaleString("vi-VN")} đ`],
+                      ].map(([k, v], i) => (
+                        <div key={k} className={`flex justify-between py-2 ${i === 6 ? "border-t border-white/20 mt-2 pt-4" : "border-b border-white/5"}`}>
+                          <span className={`text-white/60 ${i===6?"uppercase font-bold tracking-widest":""}`}>{k}</span>
+                          <span className={`font-black ${i===6?"text-2xl text-[#f6c344]":"text-white"}`}>{v}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   
                   <div className="flex gap-4 mt-8">
@@ -260,7 +527,7 @@ export default function BanVe() {
                   <p className="text-white/60 mb-8">Vui lòng giao vé cho khách hàng. Chúc khách hàng xem phim vui vẻ.</p>
                   <div className="p-4 bg-black/40 rounded-xl border border-white/5 w-full mb-8">
                     <p className="text-xs text-white/40 uppercase tracking-widest mb-1">Mã Giao Dịch</p>
-                    <p className="font-mono text-xl font-bold text-[#f6c344]">TNC-{Date.now().toString().slice(-6)}</p>
+                    <p className="font-mono text-xl font-bold text-[#f6c344]">{bookingResult?.bookingCode || bookingResult?.MaGiaoDich}</p>
                   </div>
                   <Button size="lg" onClick={reset} fullWidth className="bg-[#e71a0f] text-white font-black">
                     + GIAO DỊCH MỚI

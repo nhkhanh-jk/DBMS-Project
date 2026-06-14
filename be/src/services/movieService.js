@@ -36,7 +36,7 @@ class MovieService {
       durationMin,
       releaseDate,
       status,
-      posterUrl,
+      posterUrl
     } = normalized;
 
     // Validate required fields
@@ -123,7 +123,7 @@ class MovieService {
       durationMin,
       releaseDate,
       status,
-      posterUrl,
+      posterUrl
     } = normalized;
 
     // Prepare update document
@@ -222,7 +222,7 @@ class MovieService {
       durationMin: m.durationMin,
       releaseDate: releaseDate,
       status: m.status,
-      posterUrl: m.posterUrl,
+      posterUrl: m.posterUrl || null,
       // Vietnamese
       MaPhim: idStr,
       TenPhim: m.title,
@@ -231,7 +231,7 @@ class MovieService {
       ThoiLuong: m.durationMin,
       NgayPhatHanh: releaseDate,
       TrangThai: m.status,
-      AnhPoster: m.posterUrl,
+      AnhPhim: m.posterUrl || null,
     };
   }
 }

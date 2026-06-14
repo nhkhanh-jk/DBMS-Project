@@ -35,7 +35,11 @@ const Movie = sequelize.define('Movie', {
   posterUrl: {
     type: DataTypes.TEXT,
     allowNull: true,
+<<<<<<< HEAD
   }
+=======
+  },
+>>>>>>> origin/main
 }, {
   tableName: 'movies',
 });

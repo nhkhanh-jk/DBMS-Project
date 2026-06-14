@@ -68,9 +68,11 @@ class BookingService {
       }
     }
 
-    // Check seats are not already booked
+    // Check seats are not already booked (bỏ qua combo items)
     const alreadyBooked = (showtime.bookedSeats || []).map(bs => bs.seatNumber);
-    const requestedSeats = tickets.map(t => t.seatNumber);
+    const requestedSeats = tickets
+      .filter(t => !t.seatNumber?.startsWith('COMBO-'))
+      .map(t => t.seatNumber);
     const conflicts = requestedSeats.filter(s => alreadyBooked.includes(s));
     if (conflicts.length > 0) {
       const error = new Error(`Seats already booked: ${conflicts.join(', ')}`);
@@ -92,6 +94,7 @@ class BookingService {
         seatNumber: ticket.seatNumber,
         price: ticket.price,
         status: 'CONFIRMED',
+        type: ticket.type || 'seat',
       })),
       bookingTime: new Date(),
     };
@@ -103,11 +106,10 @@ class BookingService {
 
     const booking = await Booking.create(bookingData);
 
-    // Update showtime bookedSeats array
-    const newBookedSeats = tickets.map(t => ({
-      seatNumber: t.seatNumber,
-      status: 'BOOKED',
-    }));
+    // Chỉ cập nhật bookedSeats cho ghế thật (không cập nhật combo)
+    const newBookedSeats = tickets
+      .filter(t => !t.seatNumber?.startsWith('COMBO-'))
+      .map(t => ({ seatNumber: t.seatNumber, status: 'BOOKED' }));
     const updatedBookedSeats = [...(showtime.bookedSeats || []), ...newBookedSeats];
     await showtime.update({ bookedSeats: updatedBookedSeats });
 

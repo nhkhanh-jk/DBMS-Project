@@ -1,8 +1,11 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@heroui/button";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function AdminLayout({ children }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const menuItems = [
     { name: "Tổng Quan", path: "/nhanvien" },
@@ -10,6 +13,14 @@ export default function AdminLayout({ children }) {
     { name: "Soát Vé Trực Tuyến", path: "/nhanvien/kiem-tra-ve" },
     { name: "Lịch Chiếu", path: "/nhanvien/lich-chieu" },
   ];
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/nhanvien/login");
+  };
+
+  const displayName = user?.fullName || user?.username || user?.ho_ten || "Nhân Viên";
+  const displayRole = user?.role === "NHANVIEN" ? "Nhân Viên Bán Vé" : (user?.role || "Staff");
 
   return (
     <div className="flex bg-[#0f172a] min-h-[100vh] font-sans text-white relative">
@@ -45,15 +56,22 @@ export default function AdminLayout({ children }) {
           </div>
         </div>
 
-        <div className="p-4 border-t border-[#334155] mt-auto">
-          <Link to="/">
-              <Button 
-                className="w-full bg-[#334155] text-white hover:bg-[#475569] font-bold"
-                radius="sm"
-              >
-                VỀ TRANG KHÁCH
-              </Button>
+        <div className="p-4 border-t border-[#334155] mt-auto flex flex-col gap-2">
+          <Link to="/" className="block">
+            <Button 
+              className="w-full bg-[#334155] text-white hover:bg-[#475569] font-bold"
+              radius="sm"
+            >
+              VỀ TRANG KHÁCH
+            </Button>
           </Link>
+          <Button
+            onClick={handleLogout}
+            className="w-full bg-red-900/60 hover:bg-red-700/80 text-red-200 font-bold border border-red-700/40"
+            radius="sm"
+          >
+            🚪 ĐĂNG XUẤT
+          </Button>
         </div>
       </div>
 
@@ -65,12 +83,25 @@ export default function AdminLayout({ children }) {
                 TNC Vincom Đà Nẵng
             </span>
           </div>
-          <div className="flex items-center gap-4 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors">
-            <div className="hidden md:block text-right">
-              <div className="text-sm font-black text-white">Ngô Minh Khoa</div>
-              <div className="text-[10px] uppercase tracking-widest text-[#e71a0f] font-bold">Nhân Viên Bán Vé</div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
+              <div className="hidden md:block text-right">
+                <div className="text-sm font-black text-white">{displayName}</div>
+                <div className="text-[10px] uppercase tracking-widest text-[#e71a0f] font-bold">{displayRole}</div>
+              </div>
+              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#e71a0f] to-orange-500 border-2 border-white/20 shadow-md flex items-center justify-center text-xs font-black">
+                {displayName.charAt(0).toUpperCase()}
+              </div>
             </div>
-            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#e71a0f] to-orange-500 border-2 border-white/20 shadow-md"></div>
+            <button
+              onClick={handleLogout}
+              title="Đăng xuất"
+              className="w-9 h-9 rounded-lg bg-white/5 hover:bg-red-900/40 border border-white/10 hover:border-red-700/50 flex items-center justify-center transition-all text-white/50 hover:text-red-300"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </button>
           </div>
         </header>
 
