@@ -38,7 +38,7 @@ export default function AdminNguoiDung() {
   }, [filterRole]);
 
   const toggleStatus = async (user) => {
-    const userId = user.id || user._id || user.MaND;
+    const userId = user.id || user._id || user.MaND || user.userId;
     const currentStatus = user.isActive !== false;
     try {
       await usersApi.updateUserStatus(userId, !currentStatus);
@@ -118,7 +118,7 @@ export default function AdminNguoiDung() {
               </thead>
               <tbody>
                 {filtered.map((u) => {
-                  const uId = u.id || u._id || u.MaND;
+                  const uId = u.id || u._id || u.MaND || u.userId;
                   const uName = u.fullName || u.HoTen || u.username || "-";
                   const uEmail = u.email || u.Email || "-";
                   const uPhone = u.phoneNumber || u.SoDienThoai || "-";

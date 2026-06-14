@@ -217,6 +217,7 @@ class AuthService {
       rewardPoints: userObj.rewardPoints || 0,
       membershipLevel: userObj.membershipLevel || 'bronze',
       VaiTro: role,
+      isActive: userObj.isActive !== false,
     };
     if (role === 'KHACHHANG') {
       baseProfile.customer = {
