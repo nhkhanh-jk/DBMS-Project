@@ -32,6 +32,7 @@ import AdminUsers from "@/pages/admin/nguoidung";
 import AdminCinemas from "@/pages/admin/rap";
 import AdminStaffs from "@/pages/admin/nhanvien";
 import AdminMovies from "@/pages/admin/phim";
+import AdminDuDoan from "@/pages/admin/du-doan";
 import SuperAdminLogin from "@/pages/admin/login";
 
 // Manager pages
@@ -109,6 +110,7 @@ function App() {
         <Route element={<SuperAdminProtectedRoute><AdminCinemas /></SuperAdminProtectedRoute>} path="/admin/rap" />
         <Route element={<SuperAdminProtectedRoute><AdminStaffs /></SuperAdminProtectedRoute>} path="/admin/nhanvien" />
         <Route element={<SuperAdminProtectedRoute><AdminMovies /></SuperAdminProtectedRoute>} path="/admin/phim" />
+        <Route element={<SuperAdminProtectedRoute><AdminDuDoan /></SuperAdminProtectedRoute>} path="/admin/du-doan" />
 
         {/* Manager (Quan Ly) routes */}
         <Route element={<ManagerLogin />} path="/quanly/login" />

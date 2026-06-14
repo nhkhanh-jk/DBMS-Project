@@ -10,6 +10,7 @@ export default function AdminLayout({ children }) {
     { name: "QL RẠP & CHI NHÁNH", path: "/admin/rap" },
     { name: "QL NHÂN VIÊN", path: "/admin/nhanvien" },
     { name: "QL BỘ PHIM", path: "/admin/phim" },
+    { name: "🤖 DỰ ĐOÁN AI", path: "/admin/du-doan" },
   ];
 
   return (

@@ -60,6 +60,7 @@ export default function BanVe() {
   const [seats, setSeats] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [printed, setPrinted] = useState(false);
+  const [movieSearch, setMovieSearch] = useState("");
   
   // Loading & error states
   const [loadingMovies, setLoadingMovies] = useState(false);
@@ -70,6 +71,7 @@ export default function BanVe() {
   const [bookingResult, setBookingResult] = useState(null);
 
   const receiptRef = useRef(null);
+  const showtimeSectionRef = useRef(null);
 
   // 1. Fetch movies on mount
   useEffect(() => {
@@ -110,7 +112,20 @@ export default function BanVe() {
       try {
         const data = await showtimesApi.getShowtimes({ movieId });
         console.log("[POS] Raw showtimes response:", data);
-        setShowtimes(Array.isArray(data) ? data : []);
+        
+        // Chỉ hiển thị suất ACTIVE hoặc SCHEDULED, và chưa kết thúc
+        const now = new Date();
+        const validShowtimes = Array.isArray(data) ? data.filter(st => {
+          const status = st.status || st.TrangThai;
+          if (status === 'COMPLETED' || status === 'CANCELLED') return false;
+          // Nếu có endTime thì kiểm tra chưa hết giờ
+          const endTime = st.endTime || st.ThoiGianKetThuc;
+          if (endTime && new Date(endTime) < now) return false;
+          return true;
+        }) : [];
+        console.log("[POS] Valid showtimes (upcoming):", validShowtimes.length, "/", (Array.isArray(data) ? data.length : 0));
+        
+        setShowtimes(validShowtimes);
         setSelectedShowtime(null);
       } catch (err) {
         console.error("[POS] Failed to fetch showtimes:", err);
@@ -149,6 +164,10 @@ export default function BanVe() {
   const handleMovieSelect = (movie) => {
     console.log("[POS] User clicked movie:", movie);
     setSelectedMovie(movie);
+    // Cuộn xuống phần chọn suất chiếu sau khi React re-render
+    setTimeout(() => {
+      showtimeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
   };
 
   const toggleSeat = (seatNumber) => {
@@ -258,6 +277,24 @@ export default function BanVe() {
                 <h3 className="text-sm font-black text-white/80 uppercase">Chọn phim đang chiếu</h3>
               </CardHeader>
               <CardBody className="px-6 py-4">
+                {/* Thanh tìm kiếm phim */}
+                {!loadingMovies && movies.length > 0 && (
+                  <div className="mb-4 relative">
+                    <input
+                      type="text"
+                      value={movieSearch}
+                      onChange={(e) => setMovieSearch(e.target.value)}
+                      placeholder="🔍 Tìm kiếm tên phim..."
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-[#e71a0f]/50 transition-colors"
+                    />
+                    {movieSearch && (
+                      <button
+                        onClick={() => setMovieSearch("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 text-lg"
+                      >×</button>
+                    )}
+                  </div>
+                )}
                 {loadingMovies ? (
                   <div className="flex justify-center items-center py-8">
                     <div className="w-8 h-8 border-4 border-[#e71a0f] border-t-transparent rounded-full animate-spin" />
@@ -265,8 +302,15 @@ export default function BanVe() {
                 ) : movies.length === 0 ? (
                   <p className="text-center text-white/50 py-8">Không có phim nào đang chiếu.</p>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {movies.map((m, i) => {
+                  <div className="max-h-[460px] overflow-y-auto pr-1 space-y-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {movies
+                      .filter(m => {
+                        const name = (m.title || m.TenPhim || "").toLowerCase();
+                        return !movieSearch || name.includes(movieSearch.toLowerCase());
+                      })
+                      .slice(0, 60)
+                      .map((m, i) => {
                       const mId = m.id || m.MaPhim;
                       const isSelected = selectedMovie?.id === mId || selectedMovie?.MaPhim === mId;
                       
@@ -290,12 +334,13 @@ export default function BanVe() {
                       );
                     })}
                   </div>
+                  </div>
                 )}
               </CardBody>
             </Card>
 
             {selectedMovie && (
-              <Card className="bg-[#1e293b]/80 backdrop-blur-md border border-white/10 shadow-lg animate-in slide-in-from-top-4 duration-300">
+              <Card ref={showtimeSectionRef} className="bg-[#1e293b]/80 backdrop-blur-md border border-white/10 shadow-lg animate-in slide-in-from-top-4 duration-300">
                 <CardHeader className="px-6 py-4 border-b border-white/5">
                   <h3 className="text-sm font-black text-white/80 uppercase">Chọn suất chiếu</h3>
                 </CardHeader>
@@ -305,7 +350,7 @@ export default function BanVe() {
                       <div className="w-6 h-6 border-4 border-[#e71a0f] border-t-transparent rounded-full animate-spin" />
                     </div>
                   ) : showtimes.length === 0 ? (
-                    <p className="text-sm text-white/50 italic">Không tìm thấy suất chiếu hôm nay cho phim này.</p>
+                    <p className="text-sm text-white/50 italic">Không có suất chiếu sắp tới hợp lệ cho phim này.</p>
                   ) : (
                     <div className="flex flex-wrap gap-3">
                       {showtimes.map((st) => {
