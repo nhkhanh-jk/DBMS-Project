@@ -122,7 +122,7 @@ export default function DuDoanML() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-black text-white flex items-center gap-3">
-              <span className="w-10 h-10 bg-[#f6c344]/10 border border-[#f6c344]/30 rounded-xl flex items-center justify-center text-xl">🤖</span>
+              
               Dự Đoán Lượng Vé Bán
             </h1>
             <p className="text-white/40 text-sm mt-1 ml-[52px]">AI dự đoán số vé bán theo thông tin suất chiếu — Random Forest Regressor</p>
