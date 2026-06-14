@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const { DataTypes } = require('sequelize');
 const sequelize = require('../config/sequelize');
 const User = require('../models/User');
 const Movie = require('../models/Movie');
@@ -17,6 +18,24 @@ const seedBookings = require('./bookingSeed');
 const seedReviews = require('./reviewSeed');
 const seedServiceRequests = require('./serviceRequestSeed');
 
+async function ensureMoviePosterUrlColumn() {
+  const queryInterface = sequelize.getQueryInterface();
+  const table = await queryInterface.describeTable('movies').catch(error => {
+    if (error.original?.code === '42P01' || error.parent?.code === '42P01') {
+      return null;
+    }
+    throw error;
+  });
+
+  if (table && !table.posterUrl) {
+    console.log('Adding missing movies.posterUrl column...');
+    await queryInterface.addColumn('movies', 'posterUrl', {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    });
+  }
+}
+
 function buildMoviesFromJson() {
   return movieData.map(movie => ({
     id: movie.id,
@@ -33,7 +52,10 @@ function buildMoviesFromJson() {
 }
 
 async function seedMoviesFromJson() {
-  return Movie.bulkCreate(buildMoviesFromJson(), {
+  await ensureMoviePosterUrlColumn();
+
+  const movies = buildMoviesFromJson();
+  const createdMovies = await Movie.bulkCreate(movies, {
     updateOnDuplicate: [
       'title',
       'genres',
@@ -46,6 +68,15 @@ async function seedMoviesFromJson() {
     ],
     returning: true,
   });
+
+  for (const movie of movies) {
+    await Movie.update(
+      { posterUrl: movie.posterUrl },
+      { where: { id: movie.id } }
+    );
+  }
+
+  return createdMovies;
 }
 
 async function resetSeedData() {
@@ -63,6 +94,15 @@ async function seed() {
 
   await sequelize.authenticate();
   await sequelize.sync({ alter: true });
+
+  if (process.env.SEED_ONLY_MOVIES === 'true') {
+    console.log('Updating movies only...');
+    const movies = await seedMoviesFromJson();
+    console.log('Movie update completed');
+    console.table({ movies: movies.length });
+    await sequelize.close();
+    return;
+  }
 
   if (process.env.SEED_RESET === 'true') {
     console.log('Resetting existing data...');

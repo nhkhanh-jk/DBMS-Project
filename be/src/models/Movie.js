@@ -33,7 +33,7 @@ const Movie = sequelize.define('Movie', {
     defaultValue: 'SCHEDULED', // SCHEDULED, ACTIVE, SNEAK_SHOW
   },
   posterUrl: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: true,
   }
 }, {
