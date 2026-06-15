@@ -11,6 +11,9 @@ load_dotenv()
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 BASE_URL = "https://api.themoviedb.org/3"
 
+# Đường dẫn ảnh dự phòng mặc định khi không tìm thấy poster_path từ hệ thống TMDB
+FALLBACK_POSTER_URL = "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=800&q=80"
+
 def get_popular_movies(page=1):
     url = f"{BASE_URL}/movie/popular?api_key={TMDB_API_KEY}&language=vi-VN&page={page}"
     response = requests.get(url)
@@ -69,7 +72,10 @@ def fetch_tmdb_to_json(num_movies=500, output_file="movies_data.json"):
             status = 'RELEASED' if raw_status == 'RELEASED' else 'SCHEDULED'
             
             poster_path = details.get('poster_path')
-            poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ""
+            if poster_path and poster_path.strip():
+                poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}"
+            else:
+                poster_url = FALLBACK_POSTER_URL
             
             now_str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
